@@ -1,0 +1,27 @@
+<?php
+
+namespace App\Charts;
+
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Dashworthy\Visualizations\Charts\Abstracts\Chart;
+use Dashworthy\Visualizations\Charts\Labels\Label;
+
+class CHART_NAME extends Chart
+{
+    public function getLabel(): Label
+    {
+        //
+    }
+
+    public function getDatasets(): Collection
+    {
+        return collect([]);
+    }
+
+    public function getQuery(): Builder
+    {
+        return DB::table('');
+    }
+}

@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Query\Builder;
+use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Dashworthy\Visualizations\Data\FilterData;
+use Dashworthy\Visualizations\Enums\FilterOperator;
+use Dashworthy\Visualizations\FilterOperations\Equality\DoesNotEqual;
+
+test('can handle', function () {
+    $filter = new DoesNotEqual;
+
+    expect($filter->canHandle(FilterOperator::NOT_EQUALS))->toBeTrue();
+});
+
+test('handles the filter', function () {
+    $query = Mockery::mock(Builder::class);
+    $visualizable = Mockery::mock(Visualizable::class);
+    $filterData = new FilterData('created_at', '2023-01-01 00:00:00', FilterOperator::NOT_EQUALS);
+
+    $visualizable->shouldReceive('getFilterWith')->andReturn('created_at');
+    $visualizable->shouldReceive('isHavingRequired')->andReturn(false);
+    $visualizable->shouldReceive('getFilterWithBindings')->andReturn([]);
+
+    $query->shouldReceive('whereRaw')
+        ->once()
+        ->with('created_at != ?', ['2023-01-01 00:00:00'])
+        ->andReturnSelf();
+
+    $filter = new DoesNotEqual;
+    $result = $filter->handle($query, $visualizable, $filterData);
+
+    expect($result)->toBe($query);
+});
