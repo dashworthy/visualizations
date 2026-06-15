@@ -2,8 +2,8 @@
 
 namespace Dashworthy\Visualizations\Charts\Labels;
 
-use Illuminate\Support\Traits\Macroable;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Illuminate\Support\Traits\Macroable;
 
 /**
  * A Label represents a grouping or axis field within a chart (e.g. dates, categories).

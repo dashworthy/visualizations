@@ -1,10 +1,5 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Schema;
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Charts\Abstracts\Dataset;
 use Dashworthy\Visualizations\Charts\Datasets\Bar;
@@ -15,6 +10,11 @@ use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Tests\Fixtures\Charts\NullLabelChart;
 use Dashworthy\Visualizations\Tests\Fixtures\Charts\RevenueChart;
 use Dashworthy\Visualizations\Tests\Fixtures\Charts\RevenueWithFloatingFiltersChart;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schema;
 
 it('generates the route name from the class name', function () {
     $chart = new RevenueChart;

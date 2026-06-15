@@ -2,8 +2,8 @@
 
 namespace Dashworthy\Visualizations\Metrics\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Dashworthy\Visualizations\Rules\FilterSetRule;
+use Illuminate\Foundation\Http\FormRequest;
 
 class MetricDataRequest extends FormRequest
 {

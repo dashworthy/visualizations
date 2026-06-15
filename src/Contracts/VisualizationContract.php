@@ -2,10 +2,10 @@
 
 namespace Dashworthy\Visualizations\Contracts;
 
-use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Collection;
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 
 interface VisualizationContract
 {

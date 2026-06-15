@@ -2,8 +2,8 @@
 
 namespace Dashworthy\Visualizations\Metrics;
 
-use Illuminate\Support\Traits\Macroable;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Illuminate\Support\Traits\Macroable;
 
 /**
  * A Value represents the primary scalar aggregate for a Metric (e.g. total revenue, active users).

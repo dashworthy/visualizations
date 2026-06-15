@@ -2,10 +2,10 @@
 
 namespace Dashworthy\Visualizations\Builders;
 
-use Illuminate\Support\Collection;
-use Illuminate\Support\Traits\Macroable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Traits\Macroable;
 
 class FilterBuilder
 {

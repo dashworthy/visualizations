@@ -2,10 +2,10 @@
 
 namespace Dashworthy\Visualizations\DataGrids\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 use Dashworthy\Visualizations\Rules\FilterSetRule;
 use Dashworthy\Visualizations\Rules\SortRule;
+use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Validator;
 
 class DataGridDataRequest extends FormRequest
 {

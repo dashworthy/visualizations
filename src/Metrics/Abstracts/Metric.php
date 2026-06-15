@@ -2,12 +2,6 @@
 
 namespace Dashworthy\Visualizations\Metrics\Abstracts;
 
-use Exception;
-use Illuminate\Database\Query\Builder;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Str;
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Contracts\VisualizationContract;
@@ -17,6 +11,12 @@ use Dashworthy\Visualizations\Metrics\Http\Requests\MetricDataRequest;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricSchemaRequest;
 use Dashworthy\Visualizations\Metrics\Value;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Exception;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 
 abstract class Metric implements VisualizationContract
 {

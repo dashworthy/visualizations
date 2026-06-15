@@ -2,12 +2,12 @@
 
 namespace Dashworthy\Visualizations\Rules;
 
+use Dashworthy\Visualizations\Enums\SortOperator;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\ValidatorAwareRule;
 use Illuminate\Support\Facades\Validator as ValidatorFacade;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
-use Dashworthy\Visualizations\Enums\SortOperator;
 
 class SortRule implements ValidationRule, ValidatorAwareRule
 {

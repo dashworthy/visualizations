@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Gate;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Actions\Action;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridBulkActionRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Gate;
 
 test('constructor sets name and closure', function () {
     $closure = function (): void {};

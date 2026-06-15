@@ -2,9 +2,6 @@
 
 namespace Dashworthy\Visualizations\Tests\Fixtures\DataGrids;
 
-use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Actions\Action;
@@ -12,6 +9,9 @@ use Dashworthy\Visualizations\DataGrids\Columns\Number;
 use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\Enums\SortOperator;
 use Dashworthy\Visualizations\FloatingFilters\DateRange;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class UserDataGrid extends DataGrid
 {

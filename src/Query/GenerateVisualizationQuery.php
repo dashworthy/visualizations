@@ -2,9 +2,6 @@
 
 namespace Dashworthy\Visualizations\Query;
 
-use Exception;
-use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Collection;
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Contracts\FilterOperationContract;
@@ -13,6 +10,9 @@ use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
+use Exception;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
 
 class GenerateVisualizationQuery
 {

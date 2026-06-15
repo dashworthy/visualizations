@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Validator;
 use Dashworthy\Visualizations\Rules\FilterSetRule;
+use Illuminate\Support\Facades\Validator;
 
 it('validates filter set structure', function () {
     $data = [

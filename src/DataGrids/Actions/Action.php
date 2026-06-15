@@ -3,14 +3,14 @@
 namespace Dashworthy\Visualizations\DataGrids\Actions;
 
 use Closure;
+use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
+use Dashworthy\Visualizations\Traits\HandlesMetaData;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Traits\Macroable;
-use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
-use Dashworthy\Visualizations\Traits\HandlesMetaData;
 use Symfony\Component\HttpFoundation\Response;
 
 /**

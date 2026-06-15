@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Actions\Action;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGridWithResource;
+use Illuminate\Support\Facades\DB;
 
 test('to array returns name and empty meta', function () {
     $action = Action::make('Delete', fn (): null => null);

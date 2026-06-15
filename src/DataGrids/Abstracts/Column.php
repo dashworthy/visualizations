@@ -2,10 +2,10 @@
 
 namespace Dashworthy\Visualizations\DataGrids\Abstracts;
 
-use Illuminate\Support\Traits\Macroable;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\DataGrids\Enums\ColumnPin;
 use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
+use Illuminate\Support\Traits\Macroable;
 
 abstract class Column extends Visualizable
 {

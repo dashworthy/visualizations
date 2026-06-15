@@ -2,12 +2,12 @@
 
 namespace Dashworthy\Visualizations\FilterOperations\Text;
 
-use Illuminate\Database\Query\Builder;
 use Dashworthy\Visualizations\Abstracts\FilterOperation;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
+use Illuminate\Database\Query\Builder;
 
 class StartsWith extends FilterOperation
 {

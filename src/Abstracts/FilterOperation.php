@@ -2,9 +2,9 @@
 
 namespace Dashworthy\Visualizations\Abstracts;
 
-use Illuminate\Pipeline\Pipeline;
 use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
+use Illuminate\Pipeline\Pipeline;
 
 abstract class FilterOperation implements FilterOperationContract
 {

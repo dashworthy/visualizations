@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Collection;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\SortData;
@@ -8,6 +7,7 @@ use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\SortOperator;
+use Illuminate\Support\Collection;
 
 test('creates grid data from grid data request', function () {
     $request = DataGridDataRequest::create('/grid-data', 'GET', [

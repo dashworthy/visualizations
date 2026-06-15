@@ -2,13 +2,13 @@
 
 namespace Dashworthy\Visualizations\Traits;
 
-use Illuminate\Support\Collection;
 use Dashworthy\Visualizations\Builders\FilterBuilder;
 use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Dashworthy\Visualizations\Enums\SortOperator;
+use Illuminate\Support\Collection;
 
 trait ParsesVisualizationInput
 {

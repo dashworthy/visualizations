@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Database\Query\Builder;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Data\FilterSetData;
@@ -10,6 +9,7 @@ use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Dashworthy\Visualizations\Enums\SortOperator;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Illuminate\Database\Query\Builder;
 
 it('applies filters and sorts to query', function () {
     $query = Mockery::mock(Builder::class);

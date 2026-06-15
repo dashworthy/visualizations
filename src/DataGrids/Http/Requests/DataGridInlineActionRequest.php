@@ -2,9 +2,9 @@
 
 namespace Dashworthy\Visualizations\DataGrids\Http\Requests;
 
+use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 
 class DataGridInlineActionRequest extends FormRequest
 {

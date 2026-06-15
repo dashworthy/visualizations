@@ -2,9 +2,9 @@
 
 namespace Dashworthy\Visualizations\Charts\Http\Requests;
 
-use Illuminate\Foundation\Http\FormRequest;
 use Dashworthy\Visualizations\Rules\FilterSetRule;
 use Dashworthy\Visualizations\Rules\SortRule;
+use Illuminate\Foundation\Http\FormRequest;
 
 class ChartDataRequest extends FormRequest
 {

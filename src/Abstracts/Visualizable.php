@@ -2,9 +2,9 @@
 
 namespace Dashworthy\Visualizations\Abstracts;
 
+use Dashworthy\Visualizations\Traits\HandlesMetaData;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
-use Dashworthy\Visualizations\Traits\HandlesMetaData;
 
 abstract class Visualizable
 {

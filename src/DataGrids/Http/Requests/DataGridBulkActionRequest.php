@@ -2,10 +2,10 @@
 
 namespace Dashworthy\Visualizations\DataGrids\Http\Requests;
 
+use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
-use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 
 class DataGridBulkActionRequest extends FormRequest
 {

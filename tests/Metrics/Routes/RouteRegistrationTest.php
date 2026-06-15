@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueMetric;
+use Illuminate\Support\Facades\Route;
 
 test('route macro registers all routes', function () {
     Route::metric(RevenueMetric::class);

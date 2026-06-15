@@ -1,7 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
+use Illuminate\Support\Facades\Route;
 
 test('route macro registers all routes', function () {
     Route::dataGrid(UserDataGrid::class);

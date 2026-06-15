@@ -1,9 +1,5 @@
 <?php
 
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Gate;
 use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridBulkActionRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
@@ -12,6 +8,10 @@ use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGridWithAuthorization;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 

@@ -3,13 +3,13 @@
 namespace Dashworthy\Visualizations\Rules;
 
 use Closure;
+use Dashworthy\Visualizations\Enums\FilterOperator;
+use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\ValidatorAwareRule;
 use Illuminate\Support\Facades\Validator as ValidatorFacade;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
-use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\Enums\FilterSetOperator;
 
 class FilterSetRule implements ValidationRule, ValidatorAwareRule
 {

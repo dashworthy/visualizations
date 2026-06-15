@@ -2,8 +2,6 @@
 
 namespace Dashworthy\Visualizations\Data;
 
-use Illuminate\Support\Collection;
-use Illuminate\Support\Traits\Macroable;
 use Dashworthy\Visualizations\Builders\FilterBuilder;
 use Dashworthy\Visualizations\Charts\Http\Requests\ChartDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
@@ -11,6 +9,8 @@ use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Dashworthy\Visualizations\Enums\SortOperator;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricDataRequest;
 use Dashworthy\Visualizations\Traits\ParsesVisualizationInput;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Traits\Macroable;
 
 class VisualizationData
 {

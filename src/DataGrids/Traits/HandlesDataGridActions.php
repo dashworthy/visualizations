@@ -2,10 +2,10 @@
 
 namespace Dashworthy\Visualizations\DataGrids\Traits;
 
-use Illuminate\Support\Collection;
 use Dashworthy\Visualizations\DataGrids\Actions\Action;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridBulkActionRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridInlineActionRequest;
+use Illuminate\Support\Collection;
 use Symfony\Component\HttpFoundation\Response;
 
 trait HandlesDataGridActions

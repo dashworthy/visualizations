@@ -1,8 +1,8 @@
 <?php
 
-use Illuminate\Support\Facades\Validator;
 use Dashworthy\Visualizations\Enums\SortOperator;
 use Dashworthy\Visualizations\Rules\SortRule;
+use Illuminate\Support\Facades\Validator;
 
 it('passes with a valid sort rule', function () {
     $data = [

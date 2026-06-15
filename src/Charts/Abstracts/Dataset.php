@@ -2,9 +2,9 @@
 
 namespace Dashworthy\Visualizations\Charts\Abstracts;
 
-use Illuminate\Support\Traits\Macroable;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Charts\Enums\DatasetType;
+use Illuminate\Support\Traits\Macroable;
 
 /**
  * A Dataset represents a single series of data within a chart.  Datasets are visualizables, meaning they carry

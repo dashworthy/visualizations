@@ -2,10 +2,10 @@
 
 namespace Dashworthy\Visualizations\Tests;
 
+use Dashworthy\Visualizations\VisualizationsServiceProvider;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Dashworthy\Visualizations\VisualizationsServiceProvider;
 
 class TestCase extends Orchestra
 {

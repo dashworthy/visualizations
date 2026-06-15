@@ -1,9 +1,5 @@
 <?php
 
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Schema;
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricDataRequest;
@@ -12,6 +8,10 @@ use Dashworthy\Visualizations\Metrics\Value;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueWithFloatingFiltersMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueWithTotalFloatingFilterMetric;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schema;
 
 it('generates the route name from the class name', function () {
     $metric = new RevenueMetric;

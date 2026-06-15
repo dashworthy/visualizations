@@ -2,8 +2,8 @@
 
 namespace Dashworthy\Visualizations\Data;
 
-use Illuminate\Support\Collection;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
+use Illuminate\Support\Collection;
 
 class FilterSetData
 {

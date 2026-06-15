@@ -2,12 +2,12 @@
 
 namespace Dashworthy\Visualizations\Tests\Fixtures\Charts;
 
-use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Dashworthy\Visualizations\Charts\Abstracts\Chart;
 use Dashworthy\Visualizations\Charts\Datasets\Bar;
 use Dashworthy\Visualizations\Charts\Labels\Label;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RevenueChart extends Chart
 {

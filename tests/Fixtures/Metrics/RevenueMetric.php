@@ -2,10 +2,10 @@
 
 namespace Dashworthy\Visualizations\Tests\Fixtures\Metrics;
 
-use Illuminate\Database\Query\Builder;
-use Illuminate\Support\Facades\DB;
 use Dashworthy\Visualizations\Metrics\Abstracts\Metric;
 use Dashworthy\Visualizations\Metrics\Value;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Facades\DB;
 
 class RevenueMetric extends Metric
 {
