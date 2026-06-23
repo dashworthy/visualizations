@@ -11,6 +11,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Enumerable;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\LazyCollection;
+use Illuminate\Support\Str;
 use Illuminate\Support\Traits\Macroable;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -51,6 +52,11 @@ class Action
      * @var array<int, mixed>
      */
     protected array $rules = [];
+
+    /**
+     * Optional explicit URL slug. When null, the slug is derived from the name.
+     */
+    protected ?string $slug = null;
 
     /**
      * Action constructor.
@@ -132,6 +138,26 @@ class Action
     public function getRules(): array
     {
         return $this->rules;
+    }
+
+    /**
+     * Set an explicit URL slug, decoupling the route from the display name.
+     *
+     * @return $this
+     */
+    public function slug(string $slug): self
+    {
+        $this->slug = $slug;
+
+        return $this;
+    }
+
+    /**
+     * The URL slug for this action: the explicit override, or Str::slug(name).
+     */
+    public function getSlug(): string
+    {
+        return $this->slug ?? Str::slug($this->name);
     }
 
     /**

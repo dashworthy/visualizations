@@ -246,3 +246,15 @@ test('to array with meta includes meta values', function () {
     expect($array['meta']['icon'])->toBe('trash');
     expect($array['meta']['confirm'])->toBeTrue();
 });
+
+test('get slug defaults to the slugified name', function () {
+    expect(Action::make('Disable User', fn (): null => null)->getSlug())->toBe('disable-user');
+    expect(Action::make('Edit', fn (): null => null)->getSlug())->toBe('edit');
+});
+
+test('slug overrides the derived slug and returns self', function () {
+    $action = Action::make('Disable User', fn (): null => null);
+
+    expect($action->slug('off'))->toBe($action);
+    expect($action->getSlug())->toBe('off');
+});
