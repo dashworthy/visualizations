@@ -3,13 +3,14 @@
 namespace Dashworthy\Visualizations\DataGrids\Actions;
 
 use Closure;
-use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\Traits\HandlesMetaData;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Enumerable;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Support\Traits\Macroable;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,12 +36,32 @@ class Action
     protected Closure|array|string|null $authorize = null;
 
     /**
+     * Resolves the selected row keys into the items passed to the action closure.
+     * Defaults (in the constructor) to identity: raw row keys pass through unchanged.
+     * Returns an Enumerable so resolvers may stream (LazyCollection) or eager-load (Collection).
+     *
+     * @var Closure(Collection<int, int|string>): Enumerable<int, mixed>
+     */
+    protected Closure $resolver;
+
+    /**
+     * Validation rules applied to each selected row key during request validation.
+     * Empty by default (no row-key constraints beyond the base `required`).
+     *
+     * @var array<int, mixed>
+     */
+    protected array $rules = [];
+
+    /**
      * Action constructor.
      *
      * @param  string  $name  The name of the action.
      * @param  Closure  $closure  The closure to be executed for each row.
      */
-    public function __construct(public string $name, public Closure $closure) {}
+    public function __construct(public string $name, public Closure $closure)
+    {
+        $this->resolveWithClosure(static fn (Collection $keys): Collection => $keys);
+    }
 
     public static function make(string $name, Closure $closure): self
     {
@@ -77,16 +98,66 @@ class Action
     }
 
     /**
-     * Checks if the data grid has a valid resource model.
+     * Resolve selected rows with custom logic. The closure receives the collection
+     * of row keys and must return an Enumerable of items; each item is passed to
+     * the action closure. This is the single assignment point for the resolver.
      *
-     * @param  DataGrid  $dataGrid  The data grid instance.
-     * @return bool True if the data grid has a valid resource model, false otherwise.
+     * @param  Closure(Collection<int, int|string>): Enumerable<int, mixed>  $resolver
+     * @return $this
      */
-    protected function hasResource(DataGrid $dataGrid): bool
+    public function resolveWithClosure(Closure $resolver): self
     {
-        return ! in_array($dataGrid->resource, [null, '', '0'], true)
-            && class_exists($dataGrid->resource)
-            && is_subclass_of($dataGrid->resource, Model::class);
+        $this->resolver = $resolver;
+
+        return $this;
+    }
+
+    /**
+     * Set the validation rules applied to each selected row key during request
+     * validation (merged on top of the base `required`).
+     *
+     * @param  array<int, mixed>  $rules
+     * @return $this
+     */
+    public function rules(array $rules): self
+    {
+        $this->rules = $rules;
+
+        return $this;
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    public function getRules(): array
+    {
+        return $this->rules;
+    }
+
+    /**
+     * Resolve selected rows to Eloquent models, keyed by $key (default the primary
+     * key). Sugar over resolveWithClosure() installing the standard chunked resolver.
+     *
+     * @param  class-string<Model>  $model
+     * @param  string  $key  Column to resolve rows by (default 'id').
+     * @return $this
+     *
+     * @throws \InvalidArgumentException when $model is not an existing Model subclass
+     */
+    public function resolveWithModel(string $model, string $key = 'id'): self
+    {
+        if (! class_exists($model) || ! is_subclass_of($model, Model::class)) {
+            throw new \InvalidArgumentException(
+                "Action model [{$model}] must be an existing ".Model::class.' subclass.'
+            );
+        }
+
+        return $this->resolveWithClosure(
+            // Filters by $key but lazyById() cursors by the model's primary key for chunked iteration.
+            fn (Collection $keys): LazyCollection => $model::query()
+                ->whereIn($key, $keys)
+                ->lazyById()
+        );
     }
 
     /**
@@ -95,48 +166,37 @@ class Action
      * When exactly one row key is supplied, processing goes through processSingleRow,
      * which is the only code path that may return a RedirectResponse.
      *
-     * @param  DataGrid  $dataGrid  The data grid instance.
-     * @param  Collection<int|string, mixed>  $rows  The collection of row IDs to be processed.
+     * @param  Collection<int, int|string>  $rows
      * @return array<int|string, mixed>|Response
      */
-    public function handle(DataGrid $dataGrid, Collection $rows): array|Response
+    public function handle(Collection $rows): array|Response
     {
         if ($rows->isEmpty()) {
             return [];
         }
 
         if ($rows->count() === 1) {
-            return $this->processSingleRow($dataGrid, $rows->first());
+            return $this->processSingleRow($rows->first());
         }
 
-        return $this->hasResource($dataGrid)
-            ? $this->processModelRows($dataGrid, $rows)
-            : $this->processSimpleRows($rows);
+        return $this->processRows($rows);
     }
 
     /**
-     * Processes exactly one row key. This is the only code path that may return a
+     * Processes exactly one row key. The only code path that may return a
      * RedirectResponse — when the closure itself returns one.
      *
-     * @param  DataGrid  $dataGrid  The data grid instance.
-     * @param  string|int  $rowKey  The single row key to process.
      * @return array<int, mixed>|Response
      */
-    private function processSingleRow(DataGrid $dataGrid, string|int $rowKey): array|Response
+    private function processSingleRow(string|int $rowKey): array|Response
     {
-        if ($this->hasResource($dataGrid)) {
-            /** @var Model $model */
-            $model = new $dataGrid->resource;
-            $record = $model::query()->find($rowKey);
+        $item = ($this->resolver)(collect([$rowKey]))->first();
 
-            if ($record === null) {
-                return [];
-            }
-
-            $result = ($this->closure)($record);
-        } else {
-            $result = ($this->closure)($rowKey);
+        if ($item === null) {
+            return [];
         }
+
+        $result = ($this->closure)($item);
 
         if ($result instanceof RedirectResponse) {
             return $result;
@@ -146,38 +206,18 @@ class Action
     }
 
     /**
-     * Processes a collection of model rows using the closure provided.
+     * Processes a collection of rows by running the resolver and applying the
+     * closure to each resolved item.
      *
-     * @param  DataGrid  $dataGrid  The data grid instance.
-     * @param  Collection<int|string, mixed>  $rows  The collection of row IDs to be processed.
+     * @param  Collection<int, int|string>  $rows
      * @return array<int, mixed>
      */
-    private function processModelRows(DataGrid $dataGrid, Collection $rows): array
+    private function processRows(Collection $rows): array
     {
         $result = [];
-        /** @var Model $model */
-        $model = new $dataGrid->resource;
 
-        $model::query()
-            ->whereIn('id', $rows)
-            ->eachById(function (Model $model) use (&$result): void {
-                $result[] = ($this->closure)($model);
-            });
-
-        return $result;
-    }
-
-    /**
-     * Processes a collection of simple rows using the closure provided.
-     *
-     * @param  Collection<int|string, mixed>  $rows  The collection of row IDs to be processed.
-     * @return array<int, mixed>
-     */
-    private function processSimpleRows(Collection $rows): array
-    {
-        $result = [];
-        foreach ($rows as $rowId) {
-            $result[] = ($this->closure)($rowId);
+        foreach (($this->resolver)($rows) as $item) {
+            $result[] = ($this->closure)($item);
         }
 
         return $result;

@@ -3,6 +3,7 @@
 namespace Dashworthy\Visualizations\DataGrids\Http\Requests;
 
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
+use Dashworthy\Visualizations\DataGrids\Actions\Action;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -53,11 +54,10 @@ class DataGridBulkActionRequest extends FormRequest
             ],
         ];
 
-        /**
-         * If the data grid has a resource, we can validate the row keys against the resource.
-         */
-        if ($dataGrid->resource) {
-            $rules['row_keys.*'][] = Rule::exists($dataGrid->resource, 'id');
+        $action = $dataGrid->getBulkActions()->firstWhere('name', $this->input('action'));
+
+        if ($action instanceof Action) {
+            $rules['row_keys.*'] = array_merge($rules['row_keys.*'], $action->getRules());
         }
 
         return $rules;

@@ -23,8 +23,6 @@ abstract class DataGrid implements VisualizationContract
 {
     use HandlesDataGridActions;
 
-    public ?string $resource = null;
-
     final public function __construct() {}
 
     /**

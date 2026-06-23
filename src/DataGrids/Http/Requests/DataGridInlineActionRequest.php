@@ -3,6 +3,7 @@
 namespace Dashworthy\Visualizations\DataGrids\Http\Requests;
 
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
+use Dashworthy\Visualizations\DataGrids\Actions\Action;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -45,8 +46,10 @@ class DataGridInlineActionRequest extends FormRequest
             ],
         ];
 
-        if ($dataGrid->resource) {
-            $rules['row_key'][] = Rule::exists($dataGrid->resource, 'id');
+        $action = $dataGrid->getInlineActions()->firstWhere('name', $this->input('action'));
+
+        if ($action instanceof Action) {
+            $rules['row_key'] = array_merge($rules['row_key'], $action->getRules());
         }
 
         return $rules;

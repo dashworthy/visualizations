@@ -59,7 +59,7 @@ trait HandlesDataGridActions
             'Unauthorized action: '.$action->name
         );
 
-        $result = $action->handle($this, Collection::wrap($request->input('row_key')));
+        $result = $action->handle(Collection::wrap($request->input('row_key')));
 
         if ($result instanceof Response) {
             return $result;
@@ -97,7 +97,7 @@ trait HandlesDataGridActions
             'Unauthorized action: '.$action->name
         );
 
-        $result = $action->handle($this, Collection::wrap($request->input('row_keys', [])));
+        $result = $action->handle(Collection::wrap($request->input('row_keys', [])));
 
         if ($result instanceof Response) {
             return $result;
