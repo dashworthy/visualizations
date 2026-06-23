@@ -258,3 +258,10 @@ test('slug overrides the derived slug and returns self', function () {
     expect($action->slug('off'))->toBe($action);
     expect($action->getSlug())->toBe('off');
 });
+
+test('slug rejects an empty or whitespace value', function () {
+    expect(fn () => Action::make('Edit', fn (): null => null)->slug(''))
+        ->toThrow(InvalidArgumentException::class);
+    expect(fn () => Action::make('Edit', fn (): null => null)->slug('   '))
+        ->toThrow(InvalidArgumentException::class);
+});

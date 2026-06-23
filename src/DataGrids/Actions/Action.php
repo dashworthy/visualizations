@@ -147,6 +147,10 @@ class Action
      */
     public function slug(string $slug): self
     {
+        if (trim($slug) === '') {
+            throw new \InvalidArgumentException('Action slug must not be empty.');
+        }
+
         $this->slug = $slug;
 
         return $this;

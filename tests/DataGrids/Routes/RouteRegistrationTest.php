@@ -1,5 +1,6 @@
 <?php
 
+use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\DuplicateBulkSlugDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\DuplicateSlugDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\OverrideSlugDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
@@ -46,6 +47,11 @@ test('route macro no longer registers the shared action routes', function () {
 
 test('route macro throws on duplicate action slugs within a collection', function () {
     expect(fn () => Route::dataGrid(DuplicateSlugDataGrid::class))
+        ->toThrow(InvalidArgumentException::class);
+});
+
+test('route macro throws on duplicate bulk action slugs within a collection', function () {
+    expect(fn () => Route::dataGrid(DuplicateBulkSlugDataGrid::class))
         ->toThrow(InvalidArgumentException::class);
 });
 
