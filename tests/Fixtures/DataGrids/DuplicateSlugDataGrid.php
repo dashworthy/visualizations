@@ -28,7 +28,7 @@ class DuplicateSlugDataGrid extends DataGrid
         return collect([
             Action::make('Disable', fn (): null => null),
             // Different display name, same slug -> collision.
-            Action::make('Disable', fn (): null => null)->slug('disable'),
+            Action::make('Disable User', fn (): null => null)->slug('disable'),
         ]);
     }
 }
