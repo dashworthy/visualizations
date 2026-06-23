@@ -1,9 +1,11 @@
 <?php
 
+use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\DuplicateSlugDataGrid;
+use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\OverrideSlugDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
 use Illuminate\Support\Facades\Route;
 
-test('route macro registers all routes', function () {
+test('route macro registers data and schema routes', function () {
     Route::dataGrid(UserDataGrid::class);
 
     $routes = Route::getRoutes();
@@ -11,32 +13,59 @@ test('route macro registers all routes', function () {
 
     expect($routes->getByName('grids.users.data'))->not->toBeNull();
     expect($routes->getByName('grids.users.schema'))->not->toBeNull();
-    expect($routes->getByName('grids.users.actions.inline'))->not->toBeNull();
-    expect($routes->getByName('grids.users.actions.bulk'))->not->toBeNull();
 });
 
-test('route macro registers correct methods', function () {
+test('route macro registers a dedicated route per inline and bulk action', function () {
     Route::dataGrid(UserDataGrid::class);
 
     $routes = Route::getRoutes();
     $routes->refreshNameLookups();
 
-    expect(in_array('POST', $routes->getByName('grids.users.data')->methods()))->toBeTrue();
-    expect(in_array('POST', $routes->getByName('grids.users.schema')->methods()))->toBeTrue();
-    expect(in_array('POST', $routes->getByName('grids.users.actions.inline')->methods()))->toBeTrue();
-    expect(in_array('POST', $routes->getByName('grids.users.actions.bulk')->methods()))->toBeTrue();
+    $inline = $routes->getByName('grids.users.actions.inline.edit');
+    $bulk = $routes->getByName('grids.users.actions.bulk.create');
+
+    expect($inline)->not->toBeNull();
+    expect($bulk)->not->toBeNull();
+    expect($inline->uri())->toBe('grids/users/actions/inline/edit');
+    expect($bulk->uri())->toBe('grids/users/actions/bulk/create');
+    expect(in_array('POST', $inline->methods()))->toBeTrue();
+    expect(in_array('POST', $bulk->methods()))->toBeTrue();
+    expect($inline->defaults['action'])->toBe('edit');
+    expect($bulk->defaults['action'])->toBe('create');
 });
 
-test('route macro registers correct uris', function () {
+test('route macro no longer registers the shared action routes', function () {
     Route::dataGrid(UserDataGrid::class);
 
     $routes = Route::getRoutes();
     $routes->refreshNameLookups();
 
-    expect($routes->getByName('grids.users.data')->uri())->toBe('grids/users/data');
-    expect($routes->getByName('grids.users.schema')->uri())->toBe('grids/users/schema');
-    expect($routes->getByName('grids.users.actions.inline')->uri())->toBe('grids/users/actions/inline');
-    expect($routes->getByName('grids.users.actions.bulk')->uri())->toBe('grids/users/actions/bulk');
+    expect($routes->getByName('grids.users.actions.inline'))->toBeNull();
+    expect($routes->getByName('grids.users.actions.bulk'))->toBeNull();
+});
+
+test('route macro throws on duplicate action slugs within a collection', function () {
+    expect(fn () => Route::dataGrid(DuplicateSlugDataGrid::class))
+        ->toThrow(InvalidArgumentException::class);
+});
+
+test('route macro uses multi-word auto-slugs and explicit overrides', function () {
+    $grid = new OverrideSlugDataGrid;
+    Route::dataGrid($grid::class);
+
+    $routes = Route::getRoutes();
+    $routes->refreshNameLookups();
+
+    $base = $grid->getRouteName();
+
+    // Multi-word name auto-slugs to disable-user.
+    $multi = $routes->getByName($base.'.actions.inline.disable-user');
+    expect($multi)->not->toBeNull();
+    expect($multi->uri())->toBe(ltrim($grid->getRoutePath(), '/').'/actions/inline/disable-user');
+
+    // Explicit override wins over the name-derived slug.
+    expect($routes->getByName($base.'.actions.inline.arc'))->not->toBeNull();
+    expect($routes->getByName($base.'.actions.inline.archive'))->toBeNull();
 });
 
 test('route macro throws for non existent class', function () {

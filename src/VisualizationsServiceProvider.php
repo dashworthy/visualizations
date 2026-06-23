@@ -40,8 +40,33 @@ class VisualizationsServiceProvider extends PackageServiceProvider
 
             Route::post($dataGrid->getRoutePath().'/data', [$dataGridFQCN, 'handleData'])->name($dataGrid->getRouteName().'.data');
             Route::post($dataGrid->getRoutePath().'/schema', [$dataGridFQCN, 'handleSchema'])->name($dataGrid->getRouteName().'.schema');
-            Route::post($dataGrid->getRoutePath().'/actions/inline', [$dataGridFQCN, 'handleInlineAction'])->name($dataGrid->getRouteName().'.actions.inline');
-            Route::post($dataGrid->getRoutePath().'/actions/bulk', [$dataGridFQCN, 'handleBulkAction'])->name($dataGrid->getRouteName().'.actions.bulk');
+            $inlineSlugs = [];
+            foreach ($dataGrid->getInlineActions() as $action) {
+                $slug = $action->getSlug();
+
+                if (in_array($slug, $inlineSlugs, true)) {
+                    throw new \InvalidArgumentException("Duplicate inline action slug [{$slug}] on {$dataGridFQCN}");
+                }
+                $inlineSlugs[] = $slug;
+
+                Route::post($dataGrid->actionPath('inline', $action), [$dataGridFQCN, 'handleInlineAction'])
+                    ->defaults('action', $slug)
+                    ->name($dataGrid->getRouteName().'.actions.inline.'.$slug);
+            }
+
+            $bulkSlugs = [];
+            foreach ($dataGrid->getBulkActions() as $action) {
+                $slug = $action->getSlug();
+
+                if (in_array($slug, $bulkSlugs, true)) {
+                    throw new \InvalidArgumentException("Duplicate bulk action slug [{$slug}] on {$dataGridFQCN}");
+                }
+                $bulkSlugs[] = $slug;
+
+                Route::post($dataGrid->actionPath('bulk', $action), [$dataGridFQCN, 'handleBulkAction'])
+                    ->defaults('action', $slug)
+                    ->name($dataGrid->getRouteName().'.actions.bulk.'.$slug);
+            }
 
             if (method_exists($dataGridFQCN, 'handleViews')) {
                 Route::get($dataGrid->getRoutePath().'/views', [$dataGridFQCN, 'handleViews'])

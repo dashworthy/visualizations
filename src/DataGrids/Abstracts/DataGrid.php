@@ -7,6 +7,7 @@ use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Contracts\VisualizationContract;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
+use Dashworthy\Visualizations\DataGrids\Actions\Action;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\DataGrids\Traits\HandlesDataGridActions;
@@ -115,6 +116,16 @@ abstract class DataGrid implements VisualizationContract
             ->prepend('/')
             ->prepend($this->getRoutePrefix())
             ->toString();
+    }
+
+    /**
+     * The relative URL path for an action's dedicated route.
+     *
+     * @param  string  $type  'inline' or 'bulk'
+     */
+    public function actionPath(string $type, Action $action): string
+    {
+        return $this->getRoutePath().'/actions/'.$type.'/'.$action->getSlug();
     }
 
     public function getVisualizationKey(): string
