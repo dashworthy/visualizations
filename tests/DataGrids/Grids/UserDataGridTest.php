@@ -196,48 +196,33 @@ test('handles inline action correctly', function () {
     $grid = new UserDataGrid;
     Gate::shouldReceive('allows')->andReturn(true);
 
-    $request = DataGridInlineActionRequest::create('/actions', 'POST', [
-        'action' => 'Edit',
-        'row_key' => 1,
-    ]);
+    $request = DataGridInlineActionRequest::create('/actions', 'POST', ['row_key' => 1]);
 
-    $response = $grid->handleInlineAction($request);
+    $response = $grid->handleInlineAction($request, 'edit');
 
     expect($response)->toBeInstanceOf(JsonResponse::class);
-
-    $data = $response->getData(true);
-    expect($data)->not->toBeEmpty();
-    $this->assertEqualsCanonicalizing([['ran' => true]], $data);
+    $this->assertEqualsCanonicalizing([['ran' => true]], $response->getData(true));
 });
 
 test('handles bulk action correctly', function () {
     $grid = new UserDataGrid;
     Gate::shouldReceive('allows')->andReturn(true);
 
-    $request = DataGridBulkActionRequest::create('/actions', 'POST', [
-        'action' => 'Create',
-        'row_keys' => [1],
-    ]);
+    $request = DataGridBulkActionRequest::create('/actions', 'POST', ['row_keys' => [1]]);
 
-    $response = $grid->handleBulkAction($request);
+    $response = $grid->handleBulkAction($request, 'create');
 
     expect($response)->toBeInstanceOf(JsonResponse::class);
-
-    $data = $response->getData(true);
-    expect($data)->not->toBeEmpty();
-    $this->assertEqualsCanonicalizing([['ran' => true]], $data);
+    $this->assertEqualsCanonicalizing([['ran' => true]], $response->getData(true));
 });
 
 test('handles inline unauthorized action', function () {
     $grid = new UserDataGrid;
     Gate::shouldReceive('allows')->andReturn(false);
 
-    $request = DataGridInlineActionRequest::create('/actions', 'POST', [
-        'action' => 'Edit',
-        'row_key' => 1,
-    ]);
+    $request = DataGridInlineActionRequest::create('/actions', 'POST', ['row_key' => 1]);
 
-    expect(fn () => $grid->handleInlineAction($request))
+    expect(fn () => $grid->handleInlineAction($request, 'edit'))
         ->toThrow(HttpException::class, 'Unauthorized action: Edit');
 });
 
@@ -245,36 +230,27 @@ test('handles bulk unauthorized action', function () {
     $grid = new UserDataGrid;
     Gate::shouldReceive('allows')->andReturn(false);
 
-    $request = DataGridBulkActionRequest::create('/bulk-actions', 'POST', [
-        'action' => 'Create',
-        'row_keys' => [1],
-    ]);
+    $request = DataGridBulkActionRequest::create('/bulk-actions', 'POST', ['row_keys' => [1]]);
 
-    expect(fn () => $grid->handleBulkAction($request))
+    expect(fn () => $grid->handleBulkAction($request, 'create'))
         ->toThrow(HttpException::class, 'Unauthorized action: Create');
 });
 
 test('handles non existent inline action', function () {
     $grid = new UserDataGrid;
 
-    $request = DataGridInlineActionRequest::create('/inline-actions', 'POST', [
-        'action' => 'NonExistentAction',
-        'row_keys' => [1],
-    ]);
+    $request = DataGridInlineActionRequest::create('/inline-actions', 'POST', ['row_key' => 1]);
 
-    expect(fn () => $grid->handleInlineAction($request))
+    expect(fn () => $grid->handleInlineAction($request, 'nonexistent-action'))
         ->toThrow(NotFoundHttpException::class);
 });
 
 test('handles non existent bulk action', function () {
     $grid = new UserDataGrid;
 
-    $request = DataGridBulkActionRequest::create('/bulk-actions', 'POST', [
-        'action' => 'NonExistentAction',
-        'row_keys' => [1],
-    ]);
+    $request = DataGridBulkActionRequest::create('/bulk-actions', 'POST', ['row_keys' => [1]]);
 
-    expect(fn () => $grid->handleBulkAction($request))
+    expect(fn () => $grid->handleBulkAction($request, 'nonexistent-action'))
         ->toThrow(NotFoundHttpException::class);
 });
 

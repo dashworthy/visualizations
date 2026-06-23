@@ -31,35 +31,23 @@ trait HandlesDataGridActions
     }
 
     /**
-     * Handles the API request to execute an action against the grid.
+     * Handles the API request to execute an inline action against the grid.
      */
-    public function handleInlineAction(DataGridInlineActionRequest $request): Response
+    public function handleInlineAction(DataGridInlineActionRequest $request, string $action): Response
     {
-        $action = $this->getInlineActions()
-            ->firstWhere(
-                'name',
-                $request->input('action')
-            );
-
-        /**
-         * Check if the action is an instance of the Action class and return a 404 if it is not
-         */
-        abort_unless(
-            ! is_null($action),
-            404,
-            'Action not found'
+        $resolved = $this->getInlineActions()->first(
+            fn (Action $candidate): bool => $candidate->getSlug() === $action
         );
 
-        /**
-         * Check if the action is authorized to be executed
-         */
+        abort_unless($resolved !== null, 404, 'Action not found');
+
         abort_unless(
-            $action->isAuthorized($request),
+            $resolved->isAuthorized($request),
             403,
-            'Unauthorized action: '.$action->name
+            'Unauthorized action: '.$resolved->name
         );
 
-        $result = $action->handle(Collection::wrap($request->input('row_key')));
+        $result = $resolved->handle(Collection::wrap($request->input('row_key')));
 
         if ($result instanceof Response) {
             return $result;
@@ -69,35 +57,23 @@ trait HandlesDataGridActions
     }
 
     /**
-     * Handles the API request to execute an action against the grid.
+     * Handles the API request to execute a bulk action against the grid.
      */
-    public function handleBulkAction(DataGridBulkActionRequest $request): Response
+    public function handleBulkAction(DataGridBulkActionRequest $request, string $action): Response
     {
-        $action = $this->getBulkActions()
-            ->firstWhere(
-                'name',
-                $request->input('action')
-            );
-
-        /**
-         * Check if the action is an instance of the Action class and return a 404 if it is not
-         */
-        abort_unless(
-            ! is_null($action),
-            404,
-            'Action not found'
+        $resolved = $this->getBulkActions()->first(
+            fn (Action $candidate): bool => $candidate->getSlug() === $action
         );
 
-        /**
-         * Check if the action is authorized to be executed
-         */
+        abort_unless($resolved !== null, 404, 'Action not found');
+
         abort_unless(
-            $action->isAuthorized($request),
+            $resolved->isAuthorized($request),
             403,
-            'Unauthorized action: '.$action->name
+            'Unauthorized action: '.$resolved->name
         );
 
-        $result = $action->handle(Collection::wrap($request->input('row_keys', [])));
+        $result = $resolved->handle(Collection::wrap($request->input('row_keys', [])));
 
         if ($result instanceof Response) {
             return $result;

@@ -6,7 +6,6 @@ use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Actions\Action;
 use Illuminate\Contracts\Container\BindingResolutionException;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 class DataGridBulkActionRequest extends FormRequest
 {
@@ -30,20 +29,13 @@ class DataGridBulkActionRequest extends FormRequest
             abort(400, 'Could not find bulk action');
         }
 
-        /**
-         * Grabs a list of available action names from the data grid.
-         *
-         * @var string[] $availableActionNames
-         */
-        $availableActionNames = $dataGrid->getBulkActions()->pluck('name')->toArray();
+        $slug = $this->route('action');
+
+        $action = $dataGrid->getBulkActions()->first(
+            fn (Action $candidate): bool => $candidate->getSlug() === $slug
+        );
 
         $rules = [
-            'action' => [
-                'required',
-                'string',
-                Rule::in($availableActionNames),
-            ],
-
             'row_keys' => [
                 'required',
                 'array',
@@ -53,8 +45,6 @@ class DataGridBulkActionRequest extends FormRequest
                 'required',
             ],
         ];
-
-        $action = $dataGrid->getBulkActions()->firstWhere('name', $this->input('action'));
 
         if ($action instanceof Action) {
             $rules['row_keys.*'] = array_merge($rules['row_keys.*'], $action->getRules());
