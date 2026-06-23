@@ -40,8 +40,12 @@ abstract class DataGrid implements VisualizationContract
             'columns' => $dataGrid->getColumns()->map->toArray(),
             'floating_filters' => $dataGrid->getFloatingFilters()->map->toArray(),
             'default_sorts' => $dataGrid->getDefaultSorts()->map->toArray(),
-            'bulk_actions' => $dataGrid->getBulkActions()->map->toArray(),
-            'inline_actions' => $dataGrid->getInlineActions()->map->toArray(),
+            'bulk_actions' => $dataGrid->getBulkActions()->map(
+                fn (Action $action): array => $action->toArray() + ['url' => $dataGrid->actionPath('bulk', $action)]
+            )->all(),
+            'inline_actions' => $dataGrid->getInlineActions()->map(
+                fn (Action $action): array => $action->toArray() + ['url' => $dataGrid->actionPath('inline', $action)]
+            )->all(),
         ];
     }
 
@@ -125,7 +129,7 @@ abstract class DataGrid implements VisualizationContract
      */
     public function actionPath(string $type, Action $action): string
     {
-        return $this->getRoutePath().'/actions/'.$type.'/'.$action->getSlug();
+        return '/'.$this->getRoutePath().'/actions/'.$type.'/'.$action->getSlug();
     }
 
     public function getVisualizationKey(): string

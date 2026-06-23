@@ -64,12 +64,12 @@ function validateDataGridSchema(array $schema): void
         expect($schema['default_sorts'])->toContain($sort);
     }
 
-    $bulkActions = [['name' => 'Create', 'meta' => []]];
+    $bulkActions = [['name' => 'Create', 'meta' => [], 'url' => '/grids/users/actions/bulk/create']];
     foreach ($bulkActions as $action) {
         expect($schema['bulk_actions'])->toContain($action);
     }
 
-    $inlineActions = [['name' => 'Edit', 'meta' => []]];
+    $inlineActions = [['name' => 'Edit', 'meta' => [], 'url' => '/grids/users/actions/inline/edit']];
     foreach ($inlineActions as $action) {
         expect($schema['inline_actions'])->toContain($action);
     }
