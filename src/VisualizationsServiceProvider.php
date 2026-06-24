@@ -40,8 +40,6 @@ class VisualizationsServiceProvider extends PackageServiceProvider
 
             Route::post($dataGrid->getRoutePath().'/data', [$dataGridFQCN, 'handleData'])->name($dataGrid->getRouteName().'.data');
             Route::post($dataGrid->getRoutePath().'/schema', [$dataGridFQCN, 'handleSchema'])->name($dataGrid->getRouteName().'.schema');
-            Route::post($dataGrid->getRoutePath().'/actions/inline', [$dataGridFQCN, 'handleInlineAction'])->name($dataGrid->getRouteName().'.actions.inline');
-            Route::post($dataGrid->getRoutePath().'/actions/bulk', [$dataGridFQCN, 'handleBulkAction'])->name($dataGrid->getRouteName().'.actions.bulk');
 
             if (method_exists($dataGridFQCN, 'handleViews')) {
                 Route::get($dataGrid->getRoutePath().'/views', [$dataGridFQCN, 'handleViews'])

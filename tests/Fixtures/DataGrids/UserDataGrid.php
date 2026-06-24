@@ -4,7 +4,6 @@ namespace Dashworthy\Visualizations\Tests\Fixtures\DataGrids;
 
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
-use Dashworthy\Visualizations\DataGrids\Actions\Action;
 use Dashworthy\Visualizations\DataGrids\Columns\Number;
 use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\Enums\SortOperator;
@@ -34,24 +33,6 @@ class UserDataGrid extends DataGrid
     {
         return collect([
             SortData::make('ID', SortOperator::ASC),
-        ]);
-    }
-
-    public function getInlineActions(): Collection
-    {
-        return collect([
-            Action::make('Edit', fn (): array => [
-                'ran' => true,
-            ])->withAuthorization('edit-users'),
-        ]);
-    }
-
-    public function getBulkActions(): Collection
-    {
-        return collect([
-            Action::make('Create', fn (): array => [
-                'ran' => true,
-            ])->withAuthorization('create-users'),
         ]);
     }
 
