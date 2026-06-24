@@ -44,15 +44,3 @@ test('get floating filters returns empty by default', function () {
 
     expect($grid->getFloatingFilters())->toHaveCount(0);
 });
-
-test('get bulk actions returns empty by default', function () {
-    $grid = new UserDataGridWithAuthorization;
-
-    expect($grid->getBulkActions())->toHaveCount(0);
-});
-
-test('get inline actions returns empty by default', function () {
-    $grid = new UserDataGridWithAuthorization;
-
-    expect($grid->getInlineActions())->toHaveCount(0);
-});

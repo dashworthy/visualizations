@@ -1,9 +1,7 @@
 <?php
 
 use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
-use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridBulkActionRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
-use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridInlineActionRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
@@ -12,8 +10,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
-use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 function validateDataGridSchema(array $schema): void
 {
@@ -62,16 +58,6 @@ function validateDataGridSchema(array $schema): void
     $defaultSorts = [['field' => 'ID', 'sort_operator' => 'asc']];
     foreach ($defaultSorts as $sort) {
         expect($schema['default_sorts'])->toContain($sort);
-    }
-
-    $bulkActions = [['name' => 'Create', 'meta' => []]];
-    foreach ($bulkActions as $action) {
-        expect($schema['bulk_actions'])->toContain($action);
-    }
-
-    $inlineActions = [['name' => 'Edit', 'meta' => []]];
-    foreach ($inlineActions as $action) {
-        expect($schema['inline_actions'])->toContain($action);
     }
 
     $floatingFilters = [['field' => 'floating_filter_Joined On', 'header' => 'Joined On', 'type' => 'date_range', 'meta' => []]];
@@ -190,92 +176,6 @@ test('gets data grid key correctly', function () {
     $grid = new UserDataGrid;
 
     expect($grid->getVisualizationKey())->toBe('grids.users');
-});
-
-test('handles inline action correctly', function () {
-    $grid = new UserDataGrid;
-    Gate::shouldReceive('allows')->andReturn(true);
-
-    $request = DataGridInlineActionRequest::create('/actions', 'POST', [
-        'action' => 'Edit',
-        'row_key' => 1,
-    ]);
-
-    $response = $grid->handleInlineAction($request);
-
-    expect($response)->toBeInstanceOf(JsonResponse::class);
-
-    $data = $response->getData(true);
-    expect($data)->not->toBeEmpty();
-    $this->assertEqualsCanonicalizing([['ran' => true]], $data);
-});
-
-test('handles bulk action correctly', function () {
-    $grid = new UserDataGrid;
-    Gate::shouldReceive('allows')->andReturn(true);
-
-    $request = DataGridBulkActionRequest::create('/actions', 'POST', [
-        'action' => 'Create',
-        'row_keys' => [1],
-    ]);
-
-    $response = $grid->handleBulkAction($request);
-
-    expect($response)->toBeInstanceOf(JsonResponse::class);
-
-    $data = $response->getData(true);
-    expect($data)->not->toBeEmpty();
-    $this->assertEqualsCanonicalizing([['ran' => true]], $data);
-});
-
-test('handles inline unauthorized action', function () {
-    $grid = new UserDataGrid;
-    Gate::shouldReceive('allows')->andReturn(false);
-
-    $request = DataGridInlineActionRequest::create('/actions', 'POST', [
-        'action' => 'Edit',
-        'row_key' => 1,
-    ]);
-
-    expect(fn () => $grid->handleInlineAction($request))
-        ->toThrow(HttpException::class, 'Unauthorized action: Edit');
-});
-
-test('handles bulk unauthorized action', function () {
-    $grid = new UserDataGrid;
-    Gate::shouldReceive('allows')->andReturn(false);
-
-    $request = DataGridBulkActionRequest::create('/bulk-actions', 'POST', [
-        'action' => 'Create',
-        'row_keys' => [1],
-    ]);
-
-    expect(fn () => $grid->handleBulkAction($request))
-        ->toThrow(HttpException::class, 'Unauthorized action: Create');
-});
-
-test('handles non existent inline action', function () {
-    $grid = new UserDataGrid;
-
-    $request = DataGridInlineActionRequest::create('/inline-actions', 'POST', [
-        'action' => 'NonExistentAction',
-        'row_keys' => [1],
-    ]);
-
-    expect(fn () => $grid->handleInlineAction($request))
-        ->toThrow(NotFoundHttpException::class);
-});
-
-test('handles non existent bulk action', function () {
-    $grid = new UserDataGrid;
-
-    $request = DataGridBulkActionRequest::create('/bulk-actions', 'POST', [
-        'action' => 'NonExistentAction',
-        'row_keys' => [1],
-    ]);
-
-    expect(fn () => $grid->handleBulkAction($request))
-        ->toThrow(NotFoundHttpException::class);
 });
 
 test('fires VisualizationQueryExecuted when handleData is called with first/last pagination', function () {

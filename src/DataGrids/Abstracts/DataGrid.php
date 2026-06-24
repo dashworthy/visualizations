@@ -9,7 +9,6 @@ use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
-use Dashworthy\Visualizations\DataGrids\Traits\HandlesDataGridActions;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Exception;
@@ -21,10 +20,6 @@ use Illuminate\Support\Str;
 
 abstract class DataGrid implements VisualizationContract
 {
-    use HandlesDataGridActions;
-
-    public ?string $resource = null;
-
     final public function __construct() {}
 
     /**
@@ -41,8 +36,6 @@ abstract class DataGrid implements VisualizationContract
             'columns' => $dataGrid->getColumns()->map->toArray(),
             'floating_filters' => $dataGrid->getFloatingFilters()->map->toArray(),
             'default_sorts' => $dataGrid->getDefaultSorts()->map->toArray(),
-            'bulk_actions' => $dataGrid->getBulkActions()->map->toArray(),
-            'inline_actions' => $dataGrid->getInlineActions()->map->toArray(),
         ];
     }
 
