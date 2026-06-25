@@ -44,18 +44,16 @@ class VisualizationCache
         Request $request,
         VisualizationData $data,
     ): string {
-        $criteria = array_merge(
-            [
-                'visualization_key' => $visualization->getVisualizationKey(),
-                'auth_id' => auth()->id(),
-            ],
-            $visualization->cacheKeyCriteria($request, $data),
-        );
+        $payload = [
+            'visualization_key' => $visualization->getVisualizationKey(),
+            'auth_id' => auth()->id(),
+            'criteria' => $visualization->cacheKeyCriteria($request, $data),
+        ];
 
-        ksort($criteria);
+        ksort($payload);
 
         $prefix = config('visualizations.cache.prefix', 'visualizations');
 
-        return $prefix.':'.$visualization->getVisualizationKey().':'.sha1((string) json_encode($criteria));
+        return $prefix.':'.$visualization->getVisualizationKey().':'.sha1((string) json_encode($payload));
     }
 }

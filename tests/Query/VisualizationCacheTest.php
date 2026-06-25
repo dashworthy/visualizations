@@ -1,12 +1,19 @@
 <?php
 
+use Dashworthy\Visualizations\Contracts\ShouldCache;
 use Dashworthy\Visualizations\Data\VisualizationData;
+use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
+use Dashworthy\Visualizations\DataGrids\Columns\Number;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\Query\VisualizationCache;
 use Dashworthy\Visualizations\Query\VisualizationCacheResult;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\CachedUserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
 use Illuminate\Auth\GenericUser;
+use Illuminate\Database\Query\Builder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 beforeEach(function () {
     config()->set('cache.default', 'array');
@@ -103,6 +110,47 @@ it('keys cache entries by authenticated user', function () {
 
     expect($calls)->toBe(2);
     expect($other->fromCache)->toBeFalse();
+});
+
+it('consumer criteria cannot displace cache key identity', function () {
+    $grid = new class extends DataGrid implements ShouldCache
+    {
+        public function getColumns(): Collection
+        {
+            return collect([
+                Number::make('users.id', 'ID')->asRowKey(),
+            ]);
+        }
+
+        public function getQuery(): Builder
+        {
+            return DB::table('users');
+        }
+
+        public function cacheKeyCriteria(Request $request, VisualizationData $data): array
+        {
+            return ['auth_id' => 'attacker'];
+        }
+    };
+
+    $request = cacheRequest();
+    $data = VisualizationData::fromDataGridRequest($request);
+
+    $calls = 0;
+    $callback = function () use (&$calls) {
+        $calls++;
+
+        return collect(['value']);
+    };
+
+    $this->be(new GenericUser(['id' => 1]));
+    VisualizationCache::make()->handle($grid, $request, $data, $callback);
+
+    $this->be(new GenericUser(['id' => 2]));
+    $second = VisualizationCache::make()->handle($grid, $request, $data, $callback);
+
+    expect($calls)->toBe(2);
+    expect($second->fromCache)->toBeFalse();
 });
 
 it('keys cache entries by differing criteria', function () {
