@@ -14,6 +14,7 @@ use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -115,6 +116,21 @@ abstract class DataGrid implements VisualizationContract
     public function getVisualizationKey(): string
     {
         return $this->getRouteName();
+    }
+
+    /**
+     * Pagination criteria merged into the cache key for caching DataGrids.
+     *
+     * @return array<string, mixed>
+     */
+    public function cachePaginationCriteria(Request $request): array
+    {
+        return [
+            'per_page' => $request->input('per_page'),
+            'page' => $request->input('page'),
+            'first' => $request->input('first'),
+            'last' => $request->input('last'),
+        ];
     }
 
     /**
