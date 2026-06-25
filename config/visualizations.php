@@ -42,4 +42,11 @@ return [
         EndsWith::class,
         StartsWith::class,
     ],
+
+    'cache' => [
+        'enabled' => env('VISUALIZATIONS_CACHE_ENABLED', true),
+        'prefix' => 'visualizations',
+        'fresh' => 300,
+        'stale' => 600,
+    ],
 ];
