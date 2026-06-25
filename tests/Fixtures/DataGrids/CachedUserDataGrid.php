@@ -8,15 +8,12 @@ use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Columns\Number;
 use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\Enums\SortOperator;
-use Dashworthy\Visualizations\Traits\Cacheable;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class CachedUserDataGrid extends DataGrid implements ShouldCache
 {
-    use Cacheable;
-
     public function getColumns(): Collection
     {
         return collect([

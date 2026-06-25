@@ -11,6 +11,7 @@ use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Dashworthy\Visualizations\Traits\Cacheable;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +22,8 @@ use Illuminate\Support\Str;
 
 abstract class DataGrid implements VisualizationContract
 {
+    use Cacheable;
+
     final public function __construct() {}
 
     /**

@@ -12,6 +12,7 @@ use Dashworthy\Visualizations\Contracts\VisualizationContract;
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Dashworthy\Visualizations\Traits\Cacheable;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -21,6 +22,8 @@ use Illuminate\Support\Str;
 
 abstract class Chart implements VisualizationContract
 {
+    use Cacheable;
+
     final public function __construct() {}
 
     /**

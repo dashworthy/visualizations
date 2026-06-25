@@ -11,6 +11,7 @@ use Dashworthy\Visualizations\Metrics\Http\Requests\MetricDataRequest;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricSchemaRequest;
 use Dashworthy\Visualizations\Metrics\Value;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Dashworthy\Visualizations\Traits\Cacheable;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -20,6 +21,8 @@ use Illuminate\Support\Str;
 
 abstract class Metric implements VisualizationContract
 {
+    use Cacheable;
+
     final public function __construct() {}
 
     /**
