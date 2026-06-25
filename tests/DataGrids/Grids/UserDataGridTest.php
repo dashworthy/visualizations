@@ -4,6 +4,7 @@ use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
+use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\CachedUserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGridWithAuthorization;
 use Illuminate\Http\JsonResponse;
@@ -228,5 +229,87 @@ test('fires VisualizationQueryExecuted when handleData is called with default pa
             && $event->visualizationType === 'datagrid'
             && $event->rowCount === 2
             && $event->durationMs > 0
+    );
+});
+
+test('caching datagrid serves the second request from cache', function () {
+    config()->set('cache.default', 'array');
+    config()->set('visualizations.cache.enabled', true);
+
+    DB::table('users')->insert([
+        ['name' => 'John Doe', 'email' => 'john@example.com', 'created_at' => now(), 'updated_at' => now()],
+        ['name' => 'Jane Doe', 'email' => 'jane@example.com', 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    $grid = new CachedUserDataGrid;
+    $request = DataGridDataRequest::create('/grid-data', 'POST', [
+        'per_page' => 250,
+        'filter_sets' => [],
+        'sorts' => [],
+    ]);
+
+    $first = $grid->handleData($request)->getData(true);
+    expect($first['data'])->toHaveCount(2);
+
+    // A new row inserted after the first request must NOT appear — proof the cache served it.
+    DB::table('users')->insert([
+        ['name' => 'Late Comer', 'email' => 'late@example.com', 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    $second = $grid->handleData($request)->getData(true);
+    expect($second['data'])->toHaveCount(2);
+});
+
+test('caching datagrid fires VisualizationQueryExecuted flagged fromCache on a hit', function () {
+    config()->set('cache.default', 'array');
+    config()->set('visualizations.cache.enabled', true);
+
+    DB::table('users')->insert([
+        ['name' => 'John Doe', 'email' => 'john@example.com', 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    $grid = new CachedUserDataGrid;
+    $request = DataGridDataRequest::create('/grid-data', 'POST', [
+        'per_page' => 250,
+        'filter_sets' => [],
+        'sorts' => [],
+    ]);
+
+    // Prime the cache (miss).
+    $grid->handleData($request);
+
+    Event::fake();
+    $grid->handleData($request);
+
+    Event::assertDispatched(
+        VisualizationQueryExecuted::class,
+        fn ($event) => $event->fromCache === true
+            && $event->sql === null
+            && $event->rowCount === 1
+            && $event->durationMs >= 0
+    );
+});
+
+test('non-caching datagrid still fires VisualizationQueryExecuted with sql and fromCache false', function () {
+    DB::table('users')->insert([
+        ['name' => 'John Doe', 'email' => 'john@example.com', 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    Event::fake();
+
+    $grid = new UserDataGrid;
+    $request = DataGridDataRequest::create('/grid-data', 'POST', [
+        'per_page' => 250,
+        'filter_sets' => [],
+        'sorts' => [],
+    ]);
+
+    $grid->handleData($request);
+
+    Event::assertDispatched(
+        VisualizationQueryExecuted::class,
+        fn ($event) => $event->fromCache === false
+            && is_string($event->sql)
+            && $event->rowCount === 1
     );
 });

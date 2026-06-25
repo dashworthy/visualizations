@@ -11,6 +11,7 @@ use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Dashworthy\Visualizations\Query\VisualizationCache;
 use Dashworthy\Visualizations\Traits\Cacheable;
 use Exception;
 use Illuminate\Database\Query\Builder;
@@ -151,10 +152,12 @@ abstract class DataGrid implements VisualizationContract
             Gate::authorize($this->getPermissionName());
         }
 
+        $visualizationData = VisualizationData::fromDataGridRequest($request);
+
         $query = GenerateVisualizationQuery::make()->handle(
             $this->getQuery(),
             $this->getVisualizables(),
-            VisualizationData::fromDataGridRequest($request)
+            $visualizationData
         );
 
         $sql = $query->toRawSql();
@@ -162,27 +165,44 @@ abstract class DataGrid implements VisualizationContract
         if ($request->has('first') && $request->has('last')) {
             $first = $request->input('first');
             $last = $request->input('last');
-            $results = $query->take($last - $first)->offset($first)->get();
+
+            $outcome = VisualizationCache::make()->handle(
+                $this,
+                $request,
+                $visualizationData,
+                fn () => $query->take($last - $first)->offset($first)->get(),
+            );
+
+            $results = $outcome->results;
 
             event(new VisualizationQueryExecuted(
                 visualizationKey: $this->getVisualizationKey(),
                 visualizationType: 'datagrid',
-                sql: $sql,
+                sql: $outcome->fromCache ? null : $sql,
                 durationMs: (microtime(true) - $startedAt) * 1000,
                 rowCount: $results->count(),
+                fromCache: $outcome->fromCache,
             ));
 
             return response()->json(['first' => $first, 'last' => $last, 'data' => $results]);
         }
 
-        $data = $query->paginate($request->input('per_page', 250));
+        $outcome = VisualizationCache::make()->handle(
+            $this,
+            $request,
+            $visualizationData,
+            fn () => $query->paginate($request->input('per_page', 250)),
+        );
+
+        $data = $outcome->results;
 
         event(new VisualizationQueryExecuted(
             visualizationKey: $this->getVisualizationKey(),
             visualizationType: 'datagrid',
-            sql: $sql,
+            sql: $outcome->fromCache ? null : $sql,
             durationMs: (microtime(true) - $startedAt) * 1000,
             rowCount: $data->count(),
+            fromCache: $outcome->fromCache,
         ));
 
         return response()->json($data);
