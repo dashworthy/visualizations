@@ -5,6 +5,7 @@ use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricDataRequest;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricSchemaRequest;
 use Dashworthy\Visualizations\Metrics\Value;
+use Dashworthy\Visualizations\Tests\Fixtures\Metrics\CachedRevenueMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueWithFloatingFiltersMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueWithTotalFloatingFilterMetric;
@@ -187,6 +188,63 @@ it('fires VisualizationQueryExecuted when handleData is called', function () {
             && $event->visualizationType === 'metric'
             && $event->rowCount === 1
             && $event->durationMs > 0
+    );
+
+    Schema::dropIfExists('orders');
+});
+
+it('caching metric serves the second request from cache', function () {
+    config()->set('cache.default', 'array');
+    config()->set('visualizations.cache.enabled', true);
+
+    Schema::create('orders', function (Blueprint $table) {
+        $table->id();
+        $table->decimal('total', 10, 2);
+    });
+
+    DB::table('orders')->insert([
+        ['total' => 100.00],
+        ['total' => 200.00],
+    ]);
+
+    $metric = new CachedRevenueMetric;
+    $request = MetricDataRequest::create('/metrics/revenues/data', 'POST', ['filter_sets' => []]);
+
+    $first = json_decode($metric->handleData($request)->getContent(), true);
+    expect((float) $first['value'])->toBe(300.0);
+
+    DB::table('orders')->insert([['total' => 1000.00]]);
+
+    $second = json_decode($metric->handleData($request)->getContent(), true);
+    expect((float) $second['value'])->toBe(300.0);
+
+    Schema::dropIfExists('orders');
+});
+
+it('caching metric fires fromCache event on a hit', function () {
+    config()->set('cache.default', 'array');
+    config()->set('visualizations.cache.enabled', true);
+
+    Schema::create('orders', function (Blueprint $table) {
+        $table->id();
+        $table->decimal('total', 10, 2);
+    });
+
+    DB::table('orders')->insert([['total' => 100.00]]);
+
+    $metric = new CachedRevenueMetric;
+    $request = MetricDataRequest::create('/metrics/revenues/data', 'POST', ['filter_sets' => []]);
+
+    $metric->handleData($request);
+
+    Event::fake();
+    $metric->handleData($request);
+
+    Event::assertDispatched(
+        VisualizationQueryExecuted::class,
+        fn ($event) => $event->fromCache === true
+            && $event->sql === null
+            && $event->visualizationType === 'metric'
     );
 
     Schema::dropIfExists('orders');

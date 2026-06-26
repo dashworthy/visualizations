@@ -12,6 +12,7 @@ use Dashworthy\Visualizations\Contracts\VisualizationContract;
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Dashworthy\Visualizations\Query\VisualizationCache;
 use Dashworthy\Visualizations\Traits\Cacheable;
 use Exception;
 use Illuminate\Database\Query\Builder;
@@ -146,21 +147,32 @@ abstract class Chart implements VisualizationContract
             Gate::authorize($this->getPermissionName());
         }
 
+        $visualizationData = VisualizationData::fromChartRequest($request);
+
         $query = GenerateVisualizationQuery::make()->handle(
             $this->getQuery(),
             $this->getVisualizables(),
-            VisualizationData::fromChartRequest($request)
+            $visualizationData
         );
 
         $sql = $query->toRawSql();
-        $results = $query->get();
+
+        $outcome = VisualizationCache::make()->handle(
+            $this,
+            $request,
+            $visualizationData,
+            fn () => $query->get(),
+        );
+
+        $results = $outcome->results;
 
         event(new VisualizationQueryExecuted(
             visualizationKey: $this->getVisualizationKey(),
             visualizationType: 'chart',
-            sql: $sql,
+            sql: $outcome->fromCache ? null : $sql,
             durationMs: (microtime(true) - $startedAt) * 1000,
             rowCount: $results->count(),
+            fromCache: $outcome->fromCache,
         ));
 
         return response()->json($results);

@@ -11,6 +11,7 @@ use Dashworthy\Visualizations\Metrics\Http\Requests\MetricDataRequest;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricSchemaRequest;
 use Dashworthy\Visualizations\Metrics\Value;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Dashworthy\Visualizations\Query\VisualizationCache;
 use Dashworthy\Visualizations\Traits\Cacheable;
 use Exception;
 use Illuminate\Database\Query\Builder;
@@ -131,22 +132,33 @@ abstract class Metric implements VisualizationContract
             Gate::authorize($this->getPermissionName());
         }
 
+        $visualizationData = VisualizationData::fromMetricRequest($request);
+
         $query = GenerateVisualizationQuery::make()->handle(
             $this->getQuery(),
             $this->getVisualizables(),
-            VisualizationData::fromMetricRequest($request)
+            $visualizationData
         );
 
         $sql = $query->toRawSql();
-        $result = $query->first();
         $field = $this->getValue()->getField();
+
+        $outcome = VisualizationCache::make()->handle(
+            $this,
+            $request,
+            $visualizationData,
+            fn () => $query->first(),
+        );
+
+        $result = $outcome->results;
 
         event(new VisualizationQueryExecuted(
             visualizationKey: $this->getVisualizationKey(),
             visualizationType: 'metric',
-            sql: $sql,
+            sql: $outcome->fromCache ? null : $sql,
             durationMs: (microtime(true) - $startedAt) * 1000,
             rowCount: $result !== null ? 1 : 0,
+            fromCache: $outcome->fromCache,
         ));
 
         return response()->json([

@@ -7,6 +7,7 @@ use Dashworthy\Visualizations\Charts\Http\Requests\ChartDataRequest;
 use Dashworthy\Visualizations\Charts\Labels\Label;
 use Dashworthy\Visualizations\Charts\Labels\NullLabel;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
+use Dashworthy\Visualizations\Tests\Fixtures\Charts\CachedRevenueChart;
 use Dashworthy\Visualizations\Tests\Fixtures\Charts\NullLabelChart;
 use Dashworthy\Visualizations\Tests\Fixtures\Charts\RevenueChart;
 use Dashworthy\Visualizations\Tests\Fixtures\Charts\RevenueWithFloatingFiltersChart;
@@ -186,4 +187,38 @@ it('getVisualizables does not lose items when datasets collection keys start at 
     // All three items (label + 2 datasets) must be present
     expect($visualizables)->toHaveCount(3);
     expect($visualizables->first())->toBeInstanceOf(Label::class);
+});
+
+test('caching chart fires fromCache event on a hit', function () {
+    config()->set('cache.default', 'array');
+    config()->set('visualizations.cache.enabled', true);
+
+    Schema::create('orders', function (Blueprint $table) {
+        $table->id();
+        $table->decimal('total', 10, 2);
+        $table->timestamp('created_at')->nullable();
+    });
+
+    DB::table('orders')->insert([
+        ['total' => 100.00, 'created_at' => now()],
+    ]);
+
+    $chart = new CachedRevenueChart;
+    $request = ChartDataRequest::create(
+        '/charts/revenues/data', 'POST', ['filter_sets' => [], 'sorts' => []]
+    );
+
+    $chart->handleData($request);
+
+    Event::fake();
+    $chart->handleData($request);
+
+    Event::assertDispatched(
+        VisualizationQueryExecuted::class,
+        fn ($event) => $event->fromCache === true
+            && $event->sql === null
+            && $event->visualizationType === 'chart'
+    );
+
+    Schema::dropIfExists('orders');
 });
