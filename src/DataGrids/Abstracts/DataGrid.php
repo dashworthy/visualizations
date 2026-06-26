@@ -23,7 +23,9 @@ use Illuminate\Support\Str;
 
 abstract class DataGrid implements VisualizationContract
 {
-    use Cacheable;
+    use Cacheable {
+        cacheKeyCriteria as protected baseCacheKeyCriteria;
+    }
 
     final public function __construct() {}
 
@@ -123,17 +125,21 @@ abstract class DataGrid implements VisualizationContract
     }
 
     /**
-     * Pagination criteria merged into the cache key for caching DataGrids.
+     * Extends the baseline cache-key criteria (filter sets + sorts) with the
+     * DataGrid's pagination state, so paginated requests cache independently.
      *
      * @return array<string, mixed>
      */
-    public function cachePaginationCriteria(Request $request): array
+    public function cacheKeyCriteria(Request $request, VisualizationData $data): array
     {
         return [
-            'per_page' => $request->input('per_page'),
-            'page' => $request->input('page'),
-            'first' => $request->input('first'),
-            'last' => $request->input('last'),
+            ...$this->baseCacheKeyCriteria($request, $data),
+            'pagination' => [
+                'per_page' => $request->input('per_page'),
+                'page' => $request->input('page'),
+                'first' => $request->input('first'),
+                'last' => $request->input('last'),
+            ],
         ];
     }
 

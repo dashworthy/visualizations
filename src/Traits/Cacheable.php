@@ -8,20 +8,18 @@ use Illuminate\Http\Request;
 trait Cacheable
 {
     /**
+     * The baseline cache-key criteria shared by every visualization type: the
+     * active filter sets and sorts. Types that need more (e.g. DataGrids adding
+     * pagination) override this method and merge in their own criteria.
+     *
      * @return array<string, mixed>
      */
     public function cacheKeyCriteria(Request $request, VisualizationData $data): array
     {
-        $criteria = [
+        return [
             'filter_sets' => $data->filterSets->map->toArray()->all(),
             'sorts' => $data->sorts->map->toArray()->all(),
         ];
-
-        if (method_exists($this, 'cachePaginationCriteria')) {
-            $criteria['pagination'] = $this->cachePaginationCriteria($request);
-        }
-
-        return $criteria;
     }
 
     /**
