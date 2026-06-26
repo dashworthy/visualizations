@@ -8,6 +8,7 @@ use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\CachedUserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGridWithAuthorization;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -312,4 +313,36 @@ test('non-caching datagrid still fires VisualizationQueryExecuted with sql and f
             && is_string($event->sql)
             && $event->rowCount === 1
     );
+});
+
+test('caching datagrid paginator survives serializing file store round-trip', function () {
+    config()->set('cache.default', 'file');
+    config()->set('visualizations.cache.enabled', true);
+    Cache::flush();
+
+    DB::table('users')->insert([
+        ['name' => 'Alice', 'email' => 'alice@example.com', 'created_at' => now(), 'updated_at' => now()],
+        ['name' => 'Bob', 'email' => 'bob@example.com', 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    $grid = new CachedUserDataGrid;
+    $request = DataGridDataRequest::create('/grid-data', 'POST', [
+        'per_page' => 250,
+        'filter_sets' => [],
+        'sorts' => [],
+    ]);
+
+    // Prime the cache (miss — writes LengthAwarePaginator to the file store, serializing it).
+    $first = $grid->handleData($request)->getData(true);
+    expect($first['data'])->toHaveCount(2);
+
+    // Insert a new row — must NOT appear in the cached response.
+    DB::table('users')->insert([
+        ['name' => 'Late Comer', 'email' => 'late@example.com', 'created_at' => now(), 'updated_at' => now()],
+    ]);
+
+    // Second call deserializes from the file store.
+    $second = $grid->handleData($request)->getData(true);
+    expect($second)->toBe($first);
+    expect($second['data'])->toHaveCount(2);
 });

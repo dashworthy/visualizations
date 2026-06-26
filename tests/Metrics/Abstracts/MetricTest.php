@@ -10,6 +10,7 @@ use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueWithFloatingFiltersMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueWithTotalFloatingFilterMetric;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
@@ -246,6 +247,39 @@ it('caching metric fires fromCache event on a hit', function () {
             && $event->sql === null
             && $event->visualizationType === 'metric'
     );
+
+    Schema::dropIfExists('orders');
+});
+
+it('caching metric stdClass row survives serializing file store round-trip', function () {
+    config()->set('cache.default', 'file');
+    config()->set('visualizations.cache.enabled', true);
+    Cache::flush();
+
+    Schema::create('orders', function (Blueprint $table) {
+        $table->id();
+        $table->decimal('total', 10, 2);
+    });
+
+    DB::table('orders')->insert([
+        ['total' => 100.00],
+        ['total' => 200.00],
+    ]);
+
+    $metric = new CachedRevenueMetric;
+    $request = MetricDataRequest::create('/metrics/revenues/data', 'POST', ['filter_sets' => []]);
+
+    // Prime the cache (miss — writes stdClass row to the file store, serializing it).
+    $first = json_decode($metric->handleData($request)->getContent(), true);
+    expect((float) $first['value'])->toBe(300.0);
+
+    // Insert a new row — must NOT change the cached value.
+    DB::table('orders')->insert([['total' => 1000.00]]);
+
+    // Second call deserializes from the file store.
+    $second = json_decode($metric->handleData($request)->getContent(), true);
+    expect($second)->toBe($first);
+    expect((float) $second['value'])->toBe(300.0);
 
     Schema::dropIfExists('orders');
 });

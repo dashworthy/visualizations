@@ -162,7 +162,7 @@ abstract class Metric implements VisualizationContract
         ));
 
         return response()->json([
-            'value' => $result->{$field},
+            'value' => $result?->{$field},
         ]);
     }
 

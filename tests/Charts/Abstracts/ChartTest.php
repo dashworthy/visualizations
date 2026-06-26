@@ -13,6 +13,7 @@ use Dashworthy\Visualizations\Tests\Fixtures\Charts\RevenueChart;
 use Dashworthy\Visualizations\Tests\Fixtures\Charts\RevenueWithFloatingFiltersChart;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
@@ -219,6 +220,47 @@ test('caching chart fires fromCache event on a hit', function () {
             && $event->sql === null
             && $event->visualizationType === 'chart'
     );
+
+    Schema::dropIfExists('orders');
+});
+
+test('caching chart collection survives serializing file store round-trip', function () {
+    config()->set('cache.default', 'file');
+    config()->set('visualizations.cache.enabled', true);
+    Cache::flush();
+
+    Schema::create('orders', function (Blueprint $table) {
+        $table->id();
+        $table->decimal('total', 10, 2);
+        $table->timestamp('created_at')->nullable();
+    });
+
+    DB::table('orders')->insert([
+        ['total' => 100.00, 'created_at' => '2026-01-01 00:00:00'],
+        ['total' => 200.00, 'created_at' => '2026-01-01 00:00:00'],
+    ]);
+
+    $chart = new CachedRevenueChart;
+    $request = ChartDataRequest::create(
+        '/charts/revenues/data', 'POST', ['filter_sets' => [], 'sorts' => []]
+    );
+
+    // Prime the cache (miss — writes Collection to the file store, serializing it).
+    $first = $chart->handleData($request)->getData(true);
+    // Aggregate query: sum(total) = 300 across all rows, returned as a Collection.
+    expect($first)->not->toBeEmpty();
+    $firstSum = $first[0]['dataset_Sales'];
+
+    // Insert extra rows — the aggregate must NOT change on the second (cached) response.
+    DB::table('orders')->insert([
+        ['total' => 999.00, 'created_at' => '2026-01-02 00:00:00'],
+        ['total' => 999.00, 'created_at' => '2026-01-02 00:00:00'],
+    ]);
+
+    // Second call deserializes from the file store.
+    $second = $chart->handleData($request)->getData(true);
+    expect($second)->toBe($first);
+    expect($second[0]['dataset_Sales'])->toBe($firstSum);
 
     Schema::dropIfExists('orders');
 });
