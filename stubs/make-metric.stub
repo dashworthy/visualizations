@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Metrics;
+namespace {{ namespace }};
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
