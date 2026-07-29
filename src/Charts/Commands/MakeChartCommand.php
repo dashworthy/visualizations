@@ -10,7 +10,7 @@ class MakeChartCommand extends GeneratorCommand
 
     protected $type = 'chart';
 
-    public function getDefaultNamespace($rootNamespace): string
+    protected function getDefaultNamespace($rootNamespace): string
     {
         return $rootNamespace.'\Charts';
     }

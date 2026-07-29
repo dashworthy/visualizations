@@ -10,7 +10,7 @@ class MakeMetricCommand extends GeneratorCommand
 
     protected $type = 'metric';
 
-    public function getDefaultNamespace($rootNamespace): string
+    protected function getDefaultNamespace($rootNamespace): string
     {
         return $rootNamespace.'\Metrics';
     }

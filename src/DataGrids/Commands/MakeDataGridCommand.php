@@ -10,7 +10,7 @@ class MakeDataGridCommand extends GeneratorCommand
 
     protected $type = 'data-grid';
 
-    public function getDefaultNamespace($rootNamespace): string
+    protected function getDefaultNamespace($rootNamespace): string
     {
         return $rootNamespace.'\DataGrids';
     }
