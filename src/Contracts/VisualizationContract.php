@@ -4,6 +4,7 @@ namespace Dashworthy\Visualizations\Contracts;
 
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Dashworthy\Visualizations\Enums\VisualizationType;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 
@@ -14,6 +15,18 @@ interface VisualizationContract
      * and as the basis for keying saved state (e.g. DataGrid views).
      */
     public function getVisualizationKey(): string;
+
+    /**
+     * What kind of visualization this is — grid, chart or metric.
+     *
+     * `DataGrid`, `Chart` and `Metric` each implement this, so anything
+     * extending one of them inherits the right answer and never declares it.
+     * It exists so a consumer can branch on the kind without an `instanceof`
+     * ladder against all three base classes — a ladder every consumer has to
+     * edit each time a kind is added, and which silently rejects the new kind
+     * until they do.
+     */
+    public function getVisualizationType(): VisualizationType;
 
     /**
      * The route group prefix. Used to namespace generated route names and paths.

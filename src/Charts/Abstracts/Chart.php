@@ -10,6 +10,7 @@ use Dashworthy\Visualizations\Charts\Labels\Label;
 use Dashworthy\Visualizations\Charts\Labels\NullLabel;
 use Dashworthy\Visualizations\Contracts\VisualizationContract;
 use Dashworthy\Visualizations\Data\VisualizationData;
+use Dashworthy\Visualizations\Enums\VisualizationType;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Exception;
@@ -108,6 +109,11 @@ abstract class Chart implements VisualizationContract
     public function getVisualizationKey(): string
     {
         return $this->getRouteName();
+    }
+
+    public function getVisualizationType(): VisualizationType
+    {
+        return VisualizationType::Chart;
     }
 
     /**

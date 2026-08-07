@@ -6,6 +6,7 @@ use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Contracts\VisualizationContract;
 use Dashworthy\Visualizations\Data\VisualizationData;
+use Dashworthy\Visualizations\Enums\VisualizationType;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricDataRequest;
 use Dashworthy\Visualizations\Metrics\Http\Requests\MetricSchemaRequest;
@@ -99,6 +100,11 @@ abstract class Metric implements VisualizationContract
     public function getVisualizationKey(): string
     {
         return $this->getRouteName();
+    }
+
+    public function getVisualizationType(): VisualizationType
+    {
+        return VisualizationType::Metric;
     }
 
     /**

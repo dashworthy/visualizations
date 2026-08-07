@@ -9,6 +9,7 @@ use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
+use Dashworthy\Visualizations\Enums\VisualizationType;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Exception;
@@ -115,6 +116,11 @@ abstract class DataGrid implements VisualizationContract
     public function getVisualizationKey(): string
     {
         return $this->getRouteName();
+    }
+
+    public function getVisualizationType(): VisualizationType
+    {
+        return VisualizationType::DataGrid;
     }
 
     /**
