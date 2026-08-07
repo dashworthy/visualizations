@@ -2,23 +2,27 @@
 
 namespace Dashworthy\Visualizations\Enums;
 
+use Dashworthy\Visualizations\Contracts\DefinesVisualizationType;
+
 /**
- * What kind of visualization a class is.
+ * The kinds of visualization this package defines.
  *
- * A consumer that needs to branch on this — a widget registry storing the kind
- * alongside the class, a renderer choosing a component — should ask the
- * visualization through `getVisualizationType()` rather than testing it against
- * `DataGrid`, `Chart` and `Metric` with `instanceof`. An `instanceof` ladder
- * forces every consumer to know all three base classes, and silently stops
- * matching when a fourth kind is added here.
+ * Not the whole set — `DefinesVisualizationType` is the type, and this enum is
+ * only what ships here. An application adding its own kind implements that
+ * contract on its own enum rather than waiting for a case to be added here,
+ * the same way `DashboardSection` works in `dashworthy/dashboards`.
  *
- * The values are the wire format: they are what a consumer persists or sends to
- * a front-end, so they are stable and must not be renamed without treating it
- * as a breaking change.
+ * The values are the wire format: they are what a consumer persists or sends
+ * to a front-end, so renaming one is a breaking change.
  */
-enum VisualizationType: string
+enum VisualizationType: string implements DefinesVisualizationType
 {
     case DataGrid = 'datagrid';
     case Chart = 'chart';
     case Metric = 'metric';
+
+    public function getTypeKey(): string
+    {
+        return $this->value;
+    }
 }

@@ -4,6 +4,7 @@ namespace Dashworthy\Visualizations\DataGrids\Abstracts;
 
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Dashworthy\Visualizations\Contracts\DefinesVisualizationType;
 use Dashworthy\Visualizations\Contracts\VisualizationContract;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
@@ -118,7 +119,7 @@ abstract class DataGrid implements VisualizationContract
         return $this->getRouteName();
     }
 
-    public function getVisualizationType(): VisualizationType
+    public function getVisualizationType(): DefinesVisualizationType
     {
         return VisualizationType::DataGrid;
     }

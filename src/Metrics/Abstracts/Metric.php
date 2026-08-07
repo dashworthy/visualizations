@@ -4,6 +4,7 @@ namespace Dashworthy\Visualizations\Metrics\Abstracts;
 
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Dashworthy\Visualizations\Contracts\DefinesVisualizationType;
 use Dashworthy\Visualizations\Contracts\VisualizationContract;
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\Enums\VisualizationType;
@@ -102,7 +103,7 @@ abstract class Metric implements VisualizationContract
         return $this->getRouteName();
     }
 
-    public function getVisualizationType(): VisualizationType
+    public function getVisualizationType(): DefinesVisualizationType
     {
         return VisualizationType::Metric;
     }
