@@ -16,6 +16,22 @@ interface VisualizationContract
     public function getVisualizationKey(): string;
 
     /**
+     * What kind of visualization this is.
+     *
+     * `DataGrid`, `Chart` and `Metric` each implement this, so anything
+     * extending one of them inherits the right answer and never declares it.
+     * It exists so a consumer can branch on the kind without an `instanceof`
+     * ladder against all three base classes — a ladder every consumer has to
+     * edit each time a kind is added, and which silently rejects the new kind
+     * until they do.
+     *
+     * The return type is the `DefinesVisualizationType` contract rather than
+     * this package's `VisualizationType` enum, so an application shipping its
+     * own kind can return its own implementation here.
+     */
+    public function getVisualizationType(): DefinesVisualizationType;
+
+    /**
      * The route group prefix. Used to namespace generated route names and paths.
      * Example: returning 'grids' produces route names like 'grids.users'.
      */
