@@ -21,7 +21,8 @@ interface HydratorContract
     public function columnType(): ColumnType|string;
 
     /**
-     * Resolve every distinct, non-null key on the page. Called once per page.
+     * Resolve every distinct, non-null key on the page. Called at most once per page, and not at
+     * all when the page yields no keys — so this is not a per-page hook to hang other work on.
      *
      * Keys are int|string, the only types PHP can index an array by. A key absent from the map
      * becomes null on its row; an empty map declines the work without querying at all (useful
