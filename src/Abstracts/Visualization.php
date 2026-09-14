@@ -167,7 +167,16 @@ abstract class Visualization implements VisualizationContract
             rowCount: $fetched->rowCount,
         ));
 
-        return response()->json($fetched->payload);
+        return response()->json($this->finalizePayload($fetched));
+    }
+
+    /**
+     * Last work on the payload before it is sent. Runs after the query event, so its cost is not
+     * counted in durationMs.
+     */
+    protected function finalizePayload(FetchedData $fetched): mixed
+    {
+        return $fetched->payload;
     }
 
     /**
