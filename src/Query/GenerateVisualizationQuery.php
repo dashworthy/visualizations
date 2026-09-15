@@ -37,19 +37,30 @@ class GenerateVisualizationQuery
         $this->applySorts($query, $visualizationData->sorts);
 
         foreach ($visualizables as $visualizable) {
-            if (! $visualizable instanceof FloatingFilter) {
-                $query->selectRaw("{$visualizable->getSelectWith()} as `{$visualizable->getField()}`", $visualizable->getSelectWithBindings());
+            // A floating filter narrows the query without appearing in it; a column with no
+            // expression has nothing to select, its value arriving only after the page is fetched.
+            if ($visualizable instanceof FloatingFilter || ! $visualizable->hasExpression()) {
+                continue;
             }
+
+            $query->selectRaw("{$visualizable->getSelectWith()} as `{$visualizable->getField()}`", $visualizable->getSelectWithBindings());
         }
 
         return $query;
     }
 
+    /**
+     * Find the visualizable a requested sort or filter names.
+     *
+     * A column with no expression never matches, so a request naming one is ignored like an unknown
+     * field. Schema flags only tell the front-end; a stale client can still ask, and honouring it
+     * would order by an unselected field, or splice an empty expression into a where clause.
+     */
     private function getMatchingVisualizable(string $field): ?Visualizable
     {
-        return $this->visualizables->where(function (Visualizable $visualizable) use ($field) {
-            return $visualizable->getField() === $field;
-        })->first();
+        return $this->visualizables
+            ->reject(fn (Visualizable $visualizable): bool => ! $visualizable->hasExpression())
+            ->first(fn (Visualizable $visualizable): bool => $visualizable->getField() === $field);
     }
 
     /**
