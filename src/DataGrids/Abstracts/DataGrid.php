@@ -13,6 +13,7 @@ use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\Enums\VisualizationType;
 use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Dashworthy\Visualizations\Query\HydrateVisualizationRows;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\JsonResponse;
@@ -58,18 +59,29 @@ abstract class DataGrid implements VisualizationContract
         return collect();
     }
 
+    /** @var Collection<int, Visualizable>|null */
+    protected ?Collection $visualizables = null;
+
     /**
      * Assembles all visualizables (columns and floating filters) into a single collection for query generation.
      * Uses concat() rather than merge() to guarantee no items are dropped regardless of collection key types.
+     *
+     * Memoised: a data request asks twice, once to build the statement and once to hydrate, and both
+     * must see the same column objects — matching a hydrator's key against a second, separately built
+     * graph would trust getColumns() to be pure.
      *
      * @return Collection<int, Visualizable>
      */
     public function getVisualizables(): Collection
     {
+        if ($this->visualizables instanceof Collection) {
+            return $this->visualizables;
+        }
+
         /** @var Collection<int, Visualizable> $visualizables */
         $visualizables = $this->getColumns()->concat($this->getFloatingFilters());
 
-        return $visualizables;
+        return $this->visualizables = $visualizables;
     }
 
     /**
@@ -147,6 +159,7 @@ abstract class DataGrid implements VisualizationContract
 
         $sql = $query->toRawSql();
 
+        // Both branches hydrate after their event, so durationMs times the main query alone.
         if ($request->has('first') && $request->has('last')) {
             $first = $request->input('first');
             $last = $request->input('last');
@@ -160,7 +173,11 @@ abstract class DataGrid implements VisualizationContract
                 rowCount: $results->count(),
             ));
 
-            return response()->json(['first' => $first, 'last' => $last, 'data' => $results]);
+            return response()->json([
+                'first' => $first,
+                'last' => $last,
+                'data' => $this->hydrate($results),
+            ]);
         }
 
         $data = $query->paginate($request->input('per_page', 250));
@@ -173,7 +190,24 @@ abstract class DataGrid implements VisualizationContract
             rowCount: $data->count(),
         ));
 
+        $data->setCollection($this->hydrate($data->getCollection()));
+
         return response()->json($data);
+    }
+
+    /**
+     * Fills this grid's hydrated columns on an already-fetched page.
+     *
+     * The one step an export must call to ship the same values the grid displays.
+     *
+     * @param  Collection<int, \stdClass>  $rows
+     * @return Collection<int, \stdClass>
+     *
+     * @throws Exception
+     */
+    public function hydrate(Collection $rows): Collection
+    {
+        return HydrateVisualizationRows::make()->handle($rows, $this->getVisualizables());
     }
 
     /**
