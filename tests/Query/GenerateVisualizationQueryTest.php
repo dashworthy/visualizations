@@ -19,6 +19,7 @@ it('applies filters and sorts to query', function () {
     $visualizable->shouldReceive('getSelectWithBindings')->andReturn([]);
     $visualizable->shouldReceive('getFilterWithBindings')->andReturn([]);
     $visualizable->shouldReceive('isHavingRequired')->andReturn(false);
+    $visualizable->shouldReceive('hasExpression')->andReturn(true);
 
     // Through the fluent API: the constructor takes no arguments, so collections passed to it
     // are discarded and this test asserted nothing.
