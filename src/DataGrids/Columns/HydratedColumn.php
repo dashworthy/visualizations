@@ -14,8 +14,8 @@ use LogicException;
  * column.) It carries a {@see HydratorContract} instead of SQL, so it contributes nothing to the
  * statement, is never sortable or filterable, and still appears in the schema for rendering.
  *
- * The hydrator's keyedBy() names an ordinary column on the same grid — by its field, not its SQL.
- * Declare both:
+ * The hydrator's keyedBy() names the field of an ordinary column on the same grid, spelled as the
+ * grid declared it — 'ID', not the prefixed payload key 'column_ID'. Declare both:
  *
  *     Number::make('orders.id', 'ID'),                          // keyedBy() returns 'ID'
  *     HydratedColumn::for(OrderNotesHydrator::class, 'Notes'),
@@ -31,9 +31,13 @@ class HydratedColumn extends Column
     /** Never filterable, for the same reason. */
     protected bool $isFilterable = false;
 
+    /** No SQL to select, and none for a sort or filter to resolve against. */
+    public function hasExpression(): bool
+    {
+        return false;
+    }
+
     /**
-     * Declare a hydrated column.
-     *
      * Named for() because Visualizable::make() is final and takes a SQL expression — the one thing
      * a hydrated column has not got.
      *
@@ -78,8 +82,6 @@ class HydratedColumn extends Column
 
     /**
      * Settles the type, which only the hydrator knows, then lets the parent serialise.
-     *
-     * The flags need nothing here — they are property defaults above.
      *
      * @return array<string, mixed>
      */

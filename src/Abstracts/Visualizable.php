@@ -74,6 +74,17 @@ abstract class Visualizable
 
     abstract public function getFieldPrefix(): string;
 
+    /**
+     * Whether this carries SQL for the statement to select, filter, or sort by.
+     *
+     * False only for a value that arrives after the page is fetched, which the statement can
+     * neither select nor resolve a client's sort or filter against.
+     */
+    public function hasExpression(): bool
+    {
+        return true;
+    }
+
     public function getField(): string
     {
         return $this->getFieldPrefix().$this->field;
