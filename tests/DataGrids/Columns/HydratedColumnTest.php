@@ -1,6 +1,7 @@
 <?php
 
 use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
+use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\CountingHydrator;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\DateHydrator;
@@ -26,6 +27,15 @@ test('contributes no expression for the query generator to select', function () 
 
     expect($column->getSelectWith())->toBe('')
         ->and($column->getSelectWithBindings())->toBe([]);
+});
+
+test('reports that it carries no expression', function () {
+    // What the query generator branches on: it must not reach for a concrete column class to
+    // learn that a hydrated column has no SQL to select, sort, or filter by.
+    $column = HydratedColumn::for(new DateHydrator, 'Notes');
+
+    expect($column->hasExpression())->toBeFalse()
+        ->and(Text::make('users.name', 'Name')->hasExpression())->toBeTrue();
 });
 
 test('says so plainly when built without a hydrator', function () {
