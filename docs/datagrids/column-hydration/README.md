@@ -14,7 +14,7 @@ A **hydrated column** takes the third route. It carries no SQL and contributes n
 
 ```php
 // The grid declares the column…
-Number::make('users.id', 'ID')->asRowKey(),
+Number::make('users.id', 'ID'),
 Text::make('users.name', 'Name'),
 HydratedColumn::for(UserNotesHydrator::class, 'Notes'),
 
@@ -90,7 +90,7 @@ A class-string is resolved on first use and memoised, not in `for()`: declaring 
 
 | Rule | Why, and what happens |
 |---|---|
-| `keyedBy()` names the field as the grid declared it — `'ID'`, not `'column_ID'` | The `column_` prefix is `Visualizable`'s business. `HydrateVisualizationRows` resolves the declared name against the grid's columns; a name matching none throws, naming the field and the hydrator class |
+| `keyedBy()` names the field as the grid declared it — `'ID'`, not `'column_ID'` | The `column_` prefix is `Visualizable`'s business. `HydrateVisualizationRows` resolves the declared name against the columns the statement actually selected — a floating filter of the same name does not count — and a name matching none throws, naming the field and the hydrator class |
 | A hydrated column is never sortable or filterable | The value does not exist when the page is chosen, so a sort or filter could not be honoured. Enforced server-side, not just advertised: the schema flags tell the front-end, and `GenerateVisualizationQuery` additionally refuses to resolve the field, so a stale client asking for it is ignored like an unknown field |
 | `resolve()` is called at most once per page, per hydrated column — and not at all when the page yields no keys | Not a per-page hook — an empty page, or one whose keys are all null, skips it entirely, so a hydrator cannot use it to warm a cache |
 | Keys are `int` or `string` only | Those are the types PHP can index an array by. Anything else throws, naming the field and the type, rather than truncating a float or coercing a bool |
