@@ -73,6 +73,20 @@ test('the paginated branch serves the collection hydrate() returned', function (
     expect($data['data'][0]['column_Notes'])->toBe(NonMutatingHydratingUserDataGrid::NOTE);
 });
 
+test('the first/last branch serves the collection hydrate() returned', function () {
+    // The paginated branch has the same test above. Both need it: hydration writes in place, so
+    // either branch would look correct while ignoring what hydrate() returned — and hydrate() is
+    // the documented export seam, which a consumer may well override to return fresh rows.
+    Gate::shouldReceive('authorize')->never();
+    hydrationTestUsers();
+
+    $data = (new NonMutatingHydratingUserDataGrid)
+        ->handleData(hydrationFirstLastRequest())
+        ->getData(true);
+
+    expect($data['data'][0]['column_Notes'])->toBe(NonMutatingHydratingUserDataGrid::NOTE);
+});
+
 test('hydrate() on its own produces the same hydrated values as the grid', function () {
     Gate::shouldReceive('authorize')->never();
     hydrationTestUsers();
