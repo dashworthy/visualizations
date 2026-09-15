@@ -2,6 +2,7 @@
 
 namespace Dashworthy\Visualizations\Query;
 
+use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Contracts\HydratorContract;
 use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
@@ -74,7 +75,9 @@ class HydrateVisualizationRows
     /**
      * The payload field ('column_ID') behind a hydrator's declared key ('ID').
      *
-     * Hydrated columns are skipped: they hold no value to key from at this point.
+     * Only what the statement actually selected can key a row. A hydrated column holds no value
+     * yet, and a floating filter is never selected at all — GenerateVisualizationQuery leaves it
+     * out — so matching one would read a property no row has and null the whole column silently.
      *
      * @param  Collection<int, Visualizable>  $visualizables
      *
@@ -85,7 +88,8 @@ class HydrateVisualizationRows
         $declaredField = $hydrator->keyedBy();
 
         $keyColumn = $visualizables->first(
-            fn (Visualizable $visualizable): bool => ! $visualizable instanceof HydratedColumn
+            fn (Visualizable $visualizable): bool => ! $visualizable instanceof FloatingFilter
+                && $visualizable->hasExpression()
                 && $visualizable->getField() === $visualizable->getFieldPrefix().$declaredField
         );
 
