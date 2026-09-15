@@ -1,0 +1,39 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Support\Collection;
+use Dashworthy\Visualizations\Contracts\HydratorContract;
+use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
+
+class HYDRATOR_NAME implements HydratorContract
+{
+    /**
+     * The field keying each row, named as the grid author declared it — 'ID' for a
+     * Number::make('users.id', 'ID'), never the prefixed 'column_ID'.
+     */
+    public function keyedBy(): string
+    {
+        return 'ID';
+    }
+
+    /** How the front-end renders the value. Text is a placeholder; change it to what you return. */
+    public function columnType(): ColumnType|string
+    {
+        return ColumnType::Text;
+    }
+
+    /**
+     * Resolve every key on the page at once — in one query, or none at all. Return key => value.
+     *
+     * $keys holds every distinct, non-null key on the page. A key you leave out becomes null on its
+     * row. Scope this yourself: the package holds no tenant or authorization context.
+     *
+     * @param  Collection<int, array-key>  $keys
+     * @return array<array-key, mixed>
+     */
+    public function resolve(Collection $keys): array
+    {
+        return [];
+    }
+}
