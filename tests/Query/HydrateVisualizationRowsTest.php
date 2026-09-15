@@ -3,6 +3,7 @@
 use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
 use Dashworthy\Visualizations\DataGrids\Columns\Number;
 use Dashworthy\Visualizations\DataGrids\Columns\Text;
+use Dashworthy\Visualizations\FloatingFilters\DateRange;
 use Dashworthy\Visualizations\Query\HydrateVisualizationRows;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\StaticHydrator;
 use Illuminate\Support\Collection;
@@ -140,6 +141,23 @@ it('throws when the keyed field is not a column on the grid', function () {
 
     expect(fn () => HydrateVisualizationRows::make()->handle(rowsKeyedById([1]), $columns))
         ->toThrow(Exception::class, 'Nonexistent');
+});
+
+it('throws rather than key off a floating filter of the same name', function () {
+    // getVisualizables() is columns concat floating filters, and a floating filter is never
+    // selected — so keying off one yields a missing property on every row, an all-null column,
+    // and no query at all. It has to be the loud failure, not the silent one.
+    $hydrator = new StaticHydrator([], 'Joined');
+
+    $columns = collect([
+        Number::make('users.id', 'ID'),
+        DateRange::make('DATE(users.created_at)', 'Joined'),
+        HydratedColumn::for($hydrator, 'Notes'),
+    ]);
+
+    expect(fn () => HydrateVisualizationRows::make()->handle(rowsKeyedById([1]), $columns))
+        ->toThrow(Exception::class, 'Joined')
+        ->and($hydrator->resolveCallCount)->toBe(0);
 });
 
 it('lets an exception from the hydration source through', function () {
