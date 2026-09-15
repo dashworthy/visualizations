@@ -63,7 +63,31 @@ function notesGridRequest(): DataGridDataRequest
     ]);
 }
 
-test('hydrating a single row costs two queries', function () {
+function notesGridPaginatedRequest(): DataGridDataRequest
+{
+    return DataGridDataRequest::create('/grid-data', 'GET', [
+        'per_page' => 250,
+        'filters' => [],
+        'sorts' => [],
+    ]);
+}
+
+test('hydration adds exactly one query on the paginated branch too', function () {
+    // The paginated branch is the default, and paginate() issues its own count query — so the
+    // absolute here is 3, not 2. What hydration costs is the difference against the same grid
+    // without it, on the same branch.
+    Gate::shouldReceive('authorize')->never();
+    notesGridSeedUsers(250);
+
+    $hydrating = notesGridQueryLog(fn () => (new UserNotesDataGrid)->handleData(notesGridPaginatedRequest()));
+    $plain = notesGridQueryLog(fn () => (new UserDataGrid)->handleData(notesGridPaginatedRequest()));
+
+    expect(count($hydrating) - count($plain))->toBe(1)
+        ->and($hydrating)->toHaveCount(3)
+        ->and($plain)->toHaveCount(2);
+});
+
+test('hydrating a single row costs two queries on the first/last branch', function () {
     Gate::shouldReceive('authorize')->never();
     notesGridSeedUsers(1);
 
@@ -72,7 +96,7 @@ test('hydrating a single row costs two queries', function () {
     expect($queries)->toHaveCount(2);
 });
 
-test('hydrating 250 rows costs the same two queries', function () {
+test('hydrating 250 rows costs the same two queries on the first/last branch', function () {
     // Same count as the single-row page: the hydrator resolves the whole page at once, so the
     // second query is one whereIn rather than one lookup per row.
     Gate::shouldReceive('authorize')->never();
