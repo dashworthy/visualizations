@@ -9,7 +9,6 @@ use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
-use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Exception;
 use Illuminate\Database\Query\Builder;
@@ -38,9 +37,9 @@ class GenerateVisualizationQuery
         $this->applySorts($query, $visualizationData->sorts);
 
         foreach ($visualizables as $visualizable) {
-            // A floating filter narrows the query without appearing in it; a hydrated column's
-            // expression is empty, its value arriving only after the page is fetched.
-            if ($visualizable instanceof FloatingFilter || $visualizable instanceof HydratedColumn) {
+            // A floating filter narrows the query without appearing in it; a column with no
+            // expression has nothing to select, its value arriving only after the page is fetched.
+            if ($visualizable instanceof FloatingFilter || ! $visualizable->hasExpression()) {
                 continue;
             }
 
@@ -53,14 +52,14 @@ class GenerateVisualizationQuery
     /**
      * Find the visualizable a requested sort or filter names.
      *
-     * Hydrated columns never match, so a request naming one is ignored like an unknown field. Their
-     * schema flags only tell the front-end; a stale client can still ask, and honouring it would
-     * order by an unselected field, or splice the column's empty expression into a where clause.
+     * A column with no expression never matches, so a request naming one is ignored like an unknown
+     * field. Schema flags only tell the front-end; a stale client can still ask, and honouring it
+     * would order by an unselected field, or splice an empty expression into a where clause.
      */
     private function getMatchingVisualizable(string $field): ?Visualizable
     {
         return $this->visualizables
-            ->reject(fn (Visualizable $visualizable): bool => $visualizable instanceof HydratedColumn)
+            ->reject(fn (Visualizable $visualizable): bool => ! $visualizable->hasExpression())
             ->first(fn (Visualizable $visualizable): bool => $visualizable->getField() === $field);
     }
 
