@@ -9,8 +9,8 @@ use Illuminate\Support\Collection;
  * Fills one hydrated column, resolving a whole page of rows in one pass.
  *
  * A hydrator is handed the page's keys, never its rows, so there is nowhere to put a per-row
- * query. Scoping is the implementer's: this package holds no tenant or authorization context,
- * and a hydration source often has one the grid's own gate does not cover.
+ * query. Nothing here scopes what resolve() reads: this package holds no tenant or authorization
+ * context, so a hydrator reaching a source with its own permission rules must apply them itself.
  */
 interface HydratorContract
 {
