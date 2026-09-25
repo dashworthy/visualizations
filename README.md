@@ -1,4 +1,4 @@
-![Visualizations](art/banner.svg)
+![visualizations — Describe the data once. Any front end can render it.](art/banner.svg)
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/dashworthy/visualizations.svg?style=flat-square)](https://packagist.org/packages/dashworthy/visualizations)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/dashworthy/visualizations/run-tests.yml?branch=1.x&label=tests&style=flat-square)](https://github.com/dashworthy/visualizations/actions?query=workflow%3Arun-tests+branch%3A1.x)
