@@ -127,7 +127,7 @@ Reach the statement through `getVisualizables()`, as above, rather than building
 ```bash
 vendor/bin/pest tests/Query/HydrateVisualizationRowsTest.php     # the post-fetch step, in isolation
 vendor/bin/pest tests/DataGrids/Grids/HydratedColumnGridTest.php # the success criteria, against a real second table
-vendor/bin/pest tests/DataGrids/Grids/HydratingDataGridTest.php  # both branches of handleData()
+vendor/bin/pest tests/DataGrids/Grids/HydratingDataGridTest.php  # both branches of the grid data path
 vendor/bin/pest                                                  # full suite
 vendor/bin/phpstan analyse
 vendor/bin/pint
