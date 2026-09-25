@@ -8,6 +8,7 @@ use Dashworthy\Visualizations\Metrics\Value;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueWithFloatingFiltersMetric;
 use Dashworthy\Visualizations\Tests\Fixtures\Metrics\RevenueWithTotalFloatingFilterMetric;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -188,6 +189,29 @@ it('fires VisualizationQueryExecuted when handleData is called', function () {
             && $event->rowCount === 1
             && $event->durationMs > 0
     );
+
+    Schema::dropIfExists('orders');
+});
+
+it('handleData returns null value when a grouped query returns no rows', function () {
+    Schema::create('orders', function (Blueprint $table) {
+        $table->id();
+        $table->decimal('total', 10, 2);
+    });
+
+    $metric = new class extends RevenueMetric
+    {
+        public function getQuery(): Builder
+        {
+            return DB::table('orders')->groupBy('id');
+        }
+    };
+
+    $response = $metric->handleData(new MetricDataRequest);
+    $data = json_decode($response->getContent(), true);
+
+    expect($data)->toHaveKey('value');
+    expect($data['value'])->toBeNull();
 
     Schema::dropIfExists('orders');
 });
