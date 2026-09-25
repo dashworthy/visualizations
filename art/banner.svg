@@ -1,47 +1,61 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" role="img" aria-label="visualizations — Describe the data once. Any front end can render it.">
   <defs>
     <radialGradient id="glow" cx="50%" cy="0%" r="70%">
-      <stop offset="0%" stop-color="#10B981" stop-opacity="0.35" />
-      <stop offset="60%" stop-color="#0EA5E9" stop-opacity="0.12" />
-      <stop offset="100%" stop-color="#0B1120" stop-opacity="0" />
+      <stop offset="0%" stop-color="#10B981" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#0EA5E9" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0B1120" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#10B981" />
-      <stop offset="100%" stop-color="#0EA5E9" />
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
     </linearGradient>
     <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
-      <path d="M 48 0 L 0 0 0 48" fill="none" stroke="#1E293B" stroke-width="1" />
+      <path d="M48 0 L0 0 0 48" fill="none" stroke="#1E293B" stroke-width="1"/>
     </pattern>
+    <style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif} .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}</style>
   </defs>
 
-  <rect width="1200" height="400" fill="#0B1120" />
-  <rect width="1200" height="400" fill="url(#grid)" opacity="0.5" />
-  <rect width="1200" height="400" fill="url(#glow)" />
+  <rect width="1200" height="400" fill="#0B1120"/>
+  <rect width="1200" height="400" fill="url(#grid)" opacity="0.5"/>
+  <rect width="1200" height="400" fill="url(#glow)"/>
 
-  <text
-    x="72" y="255"
-    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    font-size="100" font-weight="800" letter-spacing="-0.04em"
-    fill="url(#accent)">Visualizations</text>
+  <!-- KPI tiles, right half; outer stroke edge flush with the crafted-by mark at x=1180 -->
+  <g stroke-width="2" stroke-dasharray="6 6" fill-opacity="0.07">
+    <rect x="849" y="68" width="158" height="106" rx="16" fill="#34D399" stroke="#34D399"/>
+    <rect x="1021" y="68" width="158" height="106" rx="16" fill="#2DD4BF" stroke="#2DD4BF"/>
+    <rect x="849" y="190" width="158" height="106" rx="16" fill="#22D3EE" stroke="#22D3EE"/>
+    <rect x="1021" y="190" width="158" height="106" rx="16" fill="#38BDF8" stroke="#38BDF8"/>
+  </g>
+  <g class="mono" font-size="11" fill="#94A3B8">
+    <text x="865" y="92">revenue</text>
+    <text x="1037" y="92">orders</text>
+    <text x="865" y="214">avg. order</text>
+    <text x="1037" y="214">refunds</text>
+  </g>
+  <g class="mono" font-size="12" text-anchor="end">
+    <text x="991" y="92" fill="#34D399">▲ 12%</text>
+    <text x="1163" y="92" fill="#34D399">▲ 4%</text>
+    <text x="991" y="214" fill="#FB7185">▼ 3%</text>
+    <text x="1163" y="214" fill="#34D399">▼ 0.4</text>
+  </g>
+  <g font-size="26" font-weight="800" letter-spacing="-0.02em" fill="#F1F5F9">
+    <text x="865" y="126">$48.2k</text>
+    <text x="1037" y="126">1,284</text>
+    <text x="865" y="248">$37.50</text>
+    <text x="1037" y="248">2.1%</text>
+  </g>
+  <g fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="865,155.6 886,152.3 907,153.4 928,149 949,150.1 970,144.6 991,141.3" stroke="#34D399"/>
+    <polyline points="1037,151.2 1058,153.4 1079,149 1100,150.1 1121,146.8 1142,147.9 1163,145.7" stroke="#2DD4BF"/>
+    <polyline points="865,266.6 886,265.5 907,268.8 928,267.7 949,271 970,272.1 991,273.2" stroke="#22D3EE"/>
+    <polyline points="1037,268.8 1058,271 1079,269.9 1100,273.2 1121,274.3 1142,275.4 1163,276.5" stroke="#38BDF8"/>
+  </g>
 
-  <text
-    x="76" y="296"
-    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    font-size="22" font-weight="400"
-    fill="#94A3B8">Charts, DataGrids, and Metrics as PHP classes for Laravel</text>
+  <!-- wordmark -->
+  <text x="72" y="255" font-size="100" font-weight="800" letter-spacing="-0.04em" fill="url(#accent)">visualizations</text>
+  <text x="76" y="296" font-size="22" font-weight="400" fill="#94A3B8">Describe the data once. Any front end can render it.</text>
 
-  <text
-    x="1180" y="344"
-    text-anchor="end"
-    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    font-size="9" font-weight="800" font-style="italic" letter-spacing="0.02em"
-    fill="#94A3B8">CRAFTED BY</text>
-
-  <text
-    x="1180" y="362"
-    text-anchor="end"
-    font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    font-size="20" font-weight="900" font-style="italic" letter-spacing="-0.07em">
-    <tspan fill="#F1F5F9">DASH</tspan><tspan fill="#CBD5E1">WORTHY</tspan>
-  </text>
+  <!-- crafted-by mark -->
+  <text x="1180" y="344" text-anchor="end" font-size="9" font-weight="800" font-style="italic" letter-spacing="0.02em" fill="#94A3B8">CRAFTED BY</text>
+  <text x="1180" y="362" text-anchor="end" font-size="20" font-weight="900" font-style="italic" letter-spacing="-0.07em"><tspan fill="url(#accent)">DASHWORTHY</tspan></text>
 </svg>
