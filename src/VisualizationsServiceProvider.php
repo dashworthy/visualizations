@@ -50,10 +50,6 @@ class VisualizationsServiceProvider extends PackageServiceProvider
             return $visualization;
         };
 
-        Route::macro('visualization', function (string $fqcn) use ($registerCoreRoutes): void {
-            $registerCoreRoutes($fqcn, Visualization::class, 'Visualization');
-        });
-
         Route::macro('chart', function (string $chartFQCN) use ($registerCoreRoutes): void {
             $registerCoreRoutes($chartFQCN, Chart::class, 'Chart');
         });

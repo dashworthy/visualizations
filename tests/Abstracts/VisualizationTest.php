@@ -6,7 +6,6 @@ use Dashworthy\Visualizations\Events\VisualizationQueryExecuted;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\FunnelDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\Funnels\SalesFunnel;
 use Illuminate\Support\Facades\Event;
-use Illuminate\Support\Facades\Route;
 
 it('derives route name, path and key for a kind the package does not ship', function () {
     $funnel = new SalesFunnel;
@@ -44,19 +43,4 @@ it('reports an overridden kind on the query event of a built-in base', function 
         VisualizationQueryExecuted::class,
         fn ($event) => $event->visualizationType === 'funnel'
     );
-});
-
-it('registers data and schema routes for any visualization', function () {
-    Route::visualization(SalesFunnel::class);
-
-    $routes = Route::getRoutes();
-    $routes->refreshNameLookups();
-
-    expect($routes->getByName('funnels.sales.data')->uri())->toBe('funnels/sales/data')
-        ->and($routes->getByName('funnels.sales.schema')->uri())->toBe('funnels/sales/schema');
-});
-
-it('rejects a class that is not a visualization', function () {
-    expect(fn () => Route::visualization(stdClass::class))
-        ->toThrow(Exception::class, 'is not a valid Visualization');
 });
