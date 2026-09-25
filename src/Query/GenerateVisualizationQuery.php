@@ -19,6 +19,9 @@ class GenerateVisualizationQuery
     /** @var Collection<int, Visualizable> */
     private Collection $visualizables;
 
+    /** @var Collection<int, FilterOperationContract>|null */
+    private ?Collection $filterOperations = null;
+
     public static function make(): self
     {
         return new self;
@@ -89,17 +92,13 @@ class GenerateVisualizationQuery
 
     private function getMatchingFilterClass(Visualizable $visualizable, FilterData $filter): ?FilterOperationContract
     {
-        $availableFilters = config('visualizations.filters');
+        // Resolved once per query rather than once per filter
+        $this->filterOperations ??= collect(config('visualizations.filters'))
+            ->map(fn (string $filterClass): FilterOperationContract => app($filterClass));
 
-        foreach ($availableFilters as $filterClass) {
-            /** @var FilterOperationContract $filterInstance */
-            $filterInstance = app($filterClass);
-            if ($filterInstance->canHandle($filter->filterOperator)) {
-                return $filterInstance;
-            }
-        }
-
-        return null;
+        return $this->filterOperations->first(
+            fn (FilterOperationContract $filterOperation): bool => $filterOperation->canHandle($filter->filterOperator)
+        );
     }
 
     /**

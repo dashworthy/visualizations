@@ -17,29 +17,39 @@ class NotIn extends FilterOperation
         return $filterOperator === FilterOperator::NOT_IN;
     }
 
+    protected function buildExpression(Visualizable $visualizable, FilterData $filterData): string
+    {
+        // You MUST have one parameter per item in the array
+        $placeholders = implode(',', array_fill(0, count($this->getNormalizedValues($filterData)), '?'));
+
+        return $visualizable->getFilterWith()." NOT IN ($placeholders)";
+    }
+
+    protected function buildBindings(Visualizable $visualizable, FilterData $filterData): array
+    {
+        return [...$visualizable->getFilterWithBindings(), ...$this->getNormalizedValues($filterData)];
+    }
+
     /**
      * @throws \Exception
      */
     public function handle(Builder $query, Visualizable $visualizable, FilterData $filterData, FilterSetOperator $filterOperator = FilterSetOperator::AND): Builder
     {
-        // Normalize the values
-        $values = Collection::wrap($filterData->value)->map(fn ($value): mixed => $this->getNormalizedValue($value))->toArray();
-
-        // You MUST have one parameter per item in the array
-        $placeholders = implode(',', array_fill(0, count($values), '?'));
-        $bindings = array_merge($visualizable->getFilterWithBindings(), $values);
-
-        // Build the expression
-        $expression = $visualizable->getFilterWith()." NOT IN ($placeholders)";
-
-        $method = $this->getQueryMethod($visualizable, $filterOperator);
-        $query->$method($expression, $bindings);
+        parent::handle($query, $visualizable, $filterData, $filterOperator);
 
         // If one of the values is null, we need to add a whereNotNull clause
-        if (in_array(null, $values)) {
+        if (in_array(null, $this->getNormalizedValues($filterData))) {
             $query->orWhereNotNull($visualizable->getFilterWith());
         }
 
         return $query;
+    }
+
+    /**
+     * @return array<int, mixed>
+     */
+    private function getNormalizedValues(FilterData $filterData): array
+    {
+        return Collection::wrap($filterData->value)->map(fn ($value): mixed => $this->getNormalizedValue($value))->toArray();
     }
 }
