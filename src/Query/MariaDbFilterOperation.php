@@ -51,11 +51,9 @@ class MariaDbFilterOperation implements FilterOperationContract
         $method = $this->getQueryMethod($visualizable, $filterSetOperator);
         $query->$method($expression, $bindings);
 
-        // A null in an IN or NOT IN list needs its own clause
-        if ($this->isSetOperator($filterData->filterOperator) && in_array(null, $this->getNormalizedValues($filterData->value))) {
-            $filterData->filterOperator === FilterOperator::IN
-                ? $query->orWhereNull($visualizable->getFilterWith())
-                : $query->orWhereNotNull($visualizable->getFilterWith());
+        // A null in an IN list needs its own clause
+        if ($filterData->filterOperator === FilterOperator::IN && in_array(null, $this->getNormalizedValues($filterData->value))) {
+            $query->orWhereNull($visualizable->getFilterWith());
         }
 
         return $query;
@@ -161,7 +159,7 @@ class MariaDbFilterOperation implements FilterOperationContract
      */
     protected function in(string $column, array $columnBindings, mixed $value): array
     {
-        return $this->compileSet($column, $columnBindings, 'IN', $value);
+        return $this->compileSet($column, $columnBindings, 'IN', $this->getNormalizedValues($value));
     }
 
     /**
@@ -170,7 +168,20 @@ class MariaDbFilterOperation implements FilterOperationContract
      */
     protected function notIn(string $column, array $columnBindings, mixed $value): array
     {
-        return $this->compileSet($column, $columnBindings, 'NOT IN', $value);
+        [$values, $hasNull] = $this->withoutNull($value);
+
+        if (! $hasNull) {
+            return $this->compileSet($column, $columnBindings, 'NOT IN', $values);
+        }
+
+        // NOT IN never matches when its list holds a null, so the null is excluded with IS NOT NULL instead
+        if ($values === []) {
+            return ["$column IS NOT NULL", $columnBindings];
+        }
+
+        [$expression, $bindings] = $this->compileSet($column, $columnBindings, 'NOT IN', $values);
+
+        return ["($expression AND $column IS NOT NULL)", [...$bindings, ...$columnBindings]];
     }
 
     /**
@@ -237,21 +248,28 @@ class MariaDbFilterOperation implements FilterOperationContract
 
     /**
      * @param  array<int, mixed>  $columnBindings
+     * @param  array<int, mixed>  $values
      * @return array{0: string, 1: array<int, mixed>}
      */
-    private function compileSet(string $column, array $columnBindings, string $operator, mixed $value): array
+    private function compileSet(string $column, array $columnBindings, string $operator, array $values): array
     {
-        $values = $this->getNormalizedValues($value);
-
         // You MUST have one parameter per item in the array
         $placeholders = implode(',', array_fill(0, count($values), '?'));
 
         return ["$column $operator ($placeholders)", [...$columnBindings, ...$values]];
     }
 
-    private function isSetOperator(FilterOperator|string $filterOperator): bool
+    /**
+     * The normalized values with any null removed, and whether there was one.
+     *
+     * @return array{0: array<int, mixed>, 1: bool}
+     */
+    private function withoutNull(mixed $value): array
     {
-        return $filterOperator === FilterOperator::IN || $filterOperator === FilterOperator::NOT_IN;
+        $values = $this->getNormalizedValues($value);
+        $withoutNull = array_values(array_filter($values, fn (mixed $value): bool => $value !== null));
+
+        return [$withoutNull, count($withoutNull) !== count($values)];
     }
 
     /**

@@ -37,3 +37,20 @@ test('does not contain binds the column expression for each time it is reference
     expect(filteredLabels($visualizable, new FilterData('label', 'on', FilterOperator::STRING_DOES_NOT_CONTAIN)))
         ->toBe(['apple', 'banana']);
 });
+
+test('not in with a null excludes the listed values and null', function () {
+    expect(filteredLabels(Text::make('label', 'label'), new FilterData('label', ['apple', null], FilterOperator::NOT_IN)))
+        ->toBe(['banana']);
+});
+
+test('not in with only a null excludes null', function () {
+    expect(filteredLabels(Text::make('label', 'label'), new FilterData('label', [null], FilterOperator::NOT_IN)))
+        ->toBe(['apple', 'banana']);
+});
+
+test('not in treats 0 as a value, not as null', function () {
+    DB::table('filter_rows')->insert(['label' => '0']);
+
+    expect(filteredLabels(Text::make('label', 'label'), new FilterData('label', [0], FilterOperator::NOT_IN)))
+        ->toBe(['apple', 'banana']);
+});
