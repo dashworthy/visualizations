@@ -23,20 +23,22 @@ test('every filter operator applies a condition', function (FilterOperator $filt
     expect((new FilterOperation)->handle($query, $visualizable, $filterData))->toBe($query);
 })->with(FilterOperator::cases());
 
-test('a subclass bound in the container replaces the conditions', function () {
+test('a subclass bound in the container replaces an operator\'s condition', function () {
     app()->bind(FilterOperation::class, fn () => new class extends FilterOperation
     {
-        protected function compile(Visualizable $visualizable, FilterData $filterData): array
+        protected function equals(string $column, array $columnBindings, mixed $value): array
         {
-            return ['overridden = ?', [$filterData->value]];
+            return ["$column <=> ?", [...$columnBindings, $value]];
         }
     });
 
     $query = Mockery::mock(Builder::class);
     $visualizable = Mockery::mock(Visualizable::class);
+    $visualizable->shouldReceive('getFilterWith')->andReturn('key');
     $visualizable->shouldReceive('isHavingRequired')->andReturn(false);
+    $visualizable->shouldReceive('getFilterWithBindings')->andReturn([]);
 
-    $query->shouldReceive('whereRaw')->once()->with('overridden = ?', ['value'])->andReturnSelf();
+    $query->shouldReceive('whereRaw')->once()->with('key <=> ?', ['value'])->andReturnSelf();
 
     expect(app(FilterOperation::class)->handle($query, $visualizable, new FilterData('key', 'value', FilterOperator::EQUALS)))->toBe($query);
 });
