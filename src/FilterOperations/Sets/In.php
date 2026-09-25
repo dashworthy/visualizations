@@ -23,22 +23,33 @@ class In extends FilterOperation
     public function handle(Builder $query, Visualizable $visualizable, FilterData $filterData, FilterSetOperator $filterOperator = FilterSetOperator::AND): Builder
     {
         // Normalize the values
-        $values = Collection::wrap($filterData->value)->map(fn ($value): mixed => $this->getNormalizedValue($value))->toArray();
+        $values = Collection::wrap($filterData->value)->map(fn ($value): mixed => $this->getNormalizedValue($value));
+        $nonNullValues = $values->reject(fn ($value): bool => $value === null)->values()->all();
+        $hasNull = $values->contains(fn ($value): bool => $value === null);
 
-        // You MUST have one parameter per item in the array
-        $placeholders = implode(',', array_fill(0, count($values), '?'));
-        $bindings = array_merge($visualizable->getFilterWithBindings(), $values);
+        $column = $visualizable->getFilterWith();
+        $columnBindings = $visualizable->getFilterWithBindings();
+        $clauses = [];
+        $bindings = [];
 
-        // Build the expression
-        $expression = $visualizable->getFilterWith()." IN ($placeholders)";
+        // SQL's IN never matches NULL, so a null in the list becomes its own IS NULL clause
+        if ($nonNullValues !== [] || ! $hasNull) {
+            // You MUST have one parameter per item in the array
+            $placeholders = implode(',', array_fill(0, count($nonNullValues), '?'));
+            $clauses[] = "$column IN ($placeholders)";
+            $bindings = [...$bindings, ...$columnBindings, ...$nonNullValues];
+        }
+
+        if ($hasNull) {
+            $clauses[] = "$column IS NULL";
+            $bindings = [...$bindings, ...$columnBindings];
+        }
+
+        // One grouped expression, so the null branch stays inside the filter set's AND/OR
+        $expression = count($clauses) > 1 ? '('.implode(' OR ', $clauses).')' : $clauses[0];
 
         $method = $this->getQueryMethod($visualizable, $filterOperator);
         $query->$method($expression, $bindings);
-
-        // If one of the values is null, we need to add a whereNull clause
-        if (in_array(null, $values)) {
-            $query->orWhereNull($visualizable->getFilterWith());
-        }
 
         return $query;
     }

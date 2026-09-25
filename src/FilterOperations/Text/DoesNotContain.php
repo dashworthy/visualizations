@@ -20,7 +20,8 @@ class DoesNotContain extends FilterOperation
     {
         $col = $visualizable->getFilterWith();
         $expression = '('.$col.' NOT LIKE ? OR '.$col.' IS NULL)';
-        $bindings = [...$visualizable->getFilterWithBindings(), '%'.$filterData->value.'%'];
+        // The column appears twice in the expression, so its bindings are needed twice
+        $bindings = [...$visualizable->getFilterWithBindings(), '%'.$filterData->value.'%', ...$visualizable->getFilterWithBindings()];
         $method = $this->getQueryMethod($visualizable, $filterOperator);
         $query->$method($expression, $bindings);
 

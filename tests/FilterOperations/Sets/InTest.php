@@ -47,13 +47,10 @@ test('handles with null values', function () {
 
     $query->shouldReceive('whereRaw')
         ->once()
-        ->with('key IN (?,?)', ['value1', null])
+        ->with('(key IN (?) OR key IS NULL)', ['value1'])
         ->andReturnSelf();
 
-    $query->shouldReceive('orWhereNull')
-        ->once()
-        ->with('key')
-        ->andReturnSelf();
+    $query->shouldNotReceive('orWhereNull');
 
     $filter = new In;
     $result = $filter->handle($query, $visualizable, $filterData);
