@@ -2,6 +2,7 @@
 
 namespace Dashworthy\Visualizations;
 
+use Dashworthy\Visualizations\Abstracts\Visualization;
 use Dashworthy\Visualizations\Charts\Abstracts\Chart;
 use Dashworthy\Visualizations\Charts\Commands\MakeChartCommand;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
@@ -28,18 +29,37 @@ class VisualizationsServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        Route::macro('dataGrid', function (string $dataGridFQCN): void {
-            if (! class_exists($dataGridFQCN)) {
-                throw new \Exception("Could not find class matching: $dataGridFQCN");
+        /**
+         * Checks the class is a visualization of the expected base, then registers its data and schema routes.
+         *
+         * @param  class-string<Visualization>  $base
+         */
+        $registerCoreRoutes = function (string $fqcn, string $base, string $kind): Visualization {
+            if (! class_exists($fqcn)) {
+                throw new \Exception("Could not find class matching: $fqcn");
             }
 
-            $dataGrid = new $dataGridFQCN;
-            if (! $dataGrid instanceof DataGrid) {
-                throw new \Exception("Class $dataGridFQCN is not a valid DataGrid");
+            $visualization = new $fqcn;
+            if (! $visualization instanceof $base) {
+                throw new \Exception("Class $fqcn is not a valid $kind");
             }
 
-            Route::post($dataGrid->getRoutePath().'/data', [$dataGridFQCN, 'handleData'])->name($dataGrid->getRouteName().'.data');
-            Route::post($dataGrid->getRoutePath().'/schema', [$dataGridFQCN, 'handleSchema'])->name($dataGrid->getRouteName().'.schema');
+            Route::post($visualization->getRoutePath().'/data', [$fqcn, 'handleData'])->name($visualization->getRouteName().'.data');
+            Route::post($visualization->getRoutePath().'/schema', [$fqcn, 'handleSchema'])->name($visualization->getRouteName().'.schema');
+
+            return $visualization;
+        };
+
+        Route::macro('chart', function (string $chartFQCN) use ($registerCoreRoutes): void {
+            $registerCoreRoutes($chartFQCN, Chart::class, 'Chart');
+        });
+
+        Route::macro('metric', function (string $metricFQCN) use ($registerCoreRoutes): void {
+            $registerCoreRoutes($metricFQCN, Metric::class, 'Metric');
+        });
+
+        Route::macro('dataGrid', function (string $dataGridFQCN) use ($registerCoreRoutes): void {
+            $dataGrid = $registerCoreRoutes($dataGridFQCN, DataGrid::class, 'DataGrid');
 
             if (method_exists($dataGridFQCN, 'handleViews')) {
                 Route::get($dataGrid->getRoutePath().'/views', [$dataGridFQCN, 'handleViews'])
@@ -70,34 +90,6 @@ class VisualizationsServiceProvider extends PackageServiceProvider
                 Route::get($dataGrid->getRoutePath().'/exports/{export}/download', [$dataGridFQCN, 'handleExportDownload'])
                     ->name($dataGrid->getRouteName().'.export.download');
             }
-        });
-
-        Route::macro('chart', function (string $chartFQCN): void {
-            if (! class_exists($chartFQCN)) {
-                throw new \Exception("Could not find class matching: $chartFQCN");
-            }
-
-            $chart = new $chartFQCN;
-            if (! $chart instanceof Chart) {
-                throw new \Exception("Class $chartFQCN is not a valid Chart");
-            }
-
-            Route::post($chart->getRoutePath().'/data', [$chartFQCN, 'handleData'])->name($chart->getRouteName().'.data');
-            Route::post($chart->getRoutePath().'/schema', [$chartFQCN, 'handleSchema'])->name($chart->getRouteName().'.schema');
-        });
-
-        Route::macro('metric', function (string $metricFQCN): void {
-            if (! class_exists($metricFQCN)) {
-                throw new \Exception("Could not find class matching: $metricFQCN");
-            }
-
-            $metric = new $metricFQCN;
-            if (! $metric instanceof Metric) {
-                throw new \Exception("Class $metricFQCN is not a valid Metric");
-            }
-
-            Route::post($metric->getRoutePath().'/data', [$metricFQCN, 'handleData'])->name($metric->getRouteName().'.data');
-            Route::post($metric->getRoutePath().'/schema', [$metricFQCN, 'handleSchema'])->name($metric->getRouteName().'.schema');
         });
     }
 }

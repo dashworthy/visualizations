@@ -7,8 +7,8 @@ use Dashworthy\Visualizations\Charts\Http\Requests\ChartDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Dashworthy\Visualizations\Enums\SortOperator;
-use Dashworthy\Visualizations\Metrics\Http\Requests\MetricDataRequest;
 use Dashworthy\Visualizations\Traits\ParsesVisualizationInput;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Traits\Macroable;
 
@@ -28,25 +28,32 @@ class VisualizationData
         $this->sorts = collect();
     }
 
-    public static function fromDataGridRequest(DataGridDataRequest $request): self
+    /**
+     * Parses the filter sets and sorts from a data request.
+     */
+    public static function fromRequest(Request $request): self
     {
         $data = new self;
         $data->filterSets = $data->parseFilterSets($request->input('filter_sets', []));
         $data->sorts = $data->parseSorts($request->input('sorts', []));
 
         return $data;
+    }
+
+    public static function fromDataGridRequest(DataGridDataRequest $request): self
+    {
+        return self::fromRequest($request);
     }
 
     public static function fromChartRequest(ChartDataRequest $request): self
     {
-        $data = new self;
-        $data->filterSets = $data->parseFilterSets($request->input('filter_sets', []));
-        $data->sorts = $data->parseSorts($request->input('sorts', []));
-
-        return $data;
+        return self::fromRequest($request);
     }
 
-    public static function fromMetricRequest(MetricDataRequest $request): self
+    /**
+     * Parses only the filter sets. A metric's request does not validate sorts, so they are never read.
+     */
+    public static function fromMetricRequest(Request $request): self
     {
         $data = new self;
         $data->filterSets = $data->parseFilterSets($request->input('filter_sets', []));
