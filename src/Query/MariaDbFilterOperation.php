@@ -188,7 +188,8 @@ class MariaDbFilterOperation implements FilterOperationContract
      */
     protected function doesNotContain(string $column, array $columnBindings, mixed $value): array
     {
-        return ["($column NOT LIKE ? OR $column IS NULL)", [...$columnBindings, '%'.$value.'%']];
+        // The column is referenced twice, so its bindings are too
+        return ["($column NOT LIKE ? OR $column IS NULL)", [...$columnBindings, '%'.$value.'%', ...$columnBindings]];
     }
 
     /**

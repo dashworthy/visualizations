@@ -25,3 +25,20 @@ test('handles the filter', function () {
 
     expect($result)->toBe($query);
 });
+
+test('binds the column expression for each time it is referenced', function () {
+    $query = Mockery::mock(Builder::class);
+    $visualizable = Mockery::mock(Visualizable::class);
+    $filterData = new FilterData('name', 'value', FilterOperator::STRING_DOES_NOT_CONTAIN);
+
+    $visualizable->shouldReceive('getFilterWith')->andReturn('COALESCE(name, ?)');
+    $visualizable->shouldReceive('isHavingRequired')->andReturn(false);
+    $visualizable->shouldReceive('getFilterWithBindings')->andReturn(['none']);
+
+    $query->shouldReceive('whereRaw')
+        ->once()
+        ->with('(COALESCE(name, ?) NOT LIKE ? OR COALESCE(name, ?) IS NULL)', ['none', '%value%', 'none'])
+        ->andReturnSelf();
+
+    expect((new MariaDbFilterOperation)->handle($query, $visualizable, $filterData))->toBe($query);
+});
