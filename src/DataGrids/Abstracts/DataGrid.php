@@ -2,15 +2,14 @@
 
 namespace Dashworthy\Visualizations\DataGrids\Abstracts;
 
-use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Abstracts\Visualization;
 use Dashworthy\Visualizations\Contracts\DefinesVisualizationType;
 use Dashworthy\Visualizations\Data\FetchedData;
 use Dashworthy\Visualizations\Data\SortData;
+use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\Enums\VisualizationType;
-use Dashworthy\Visualizations\Query\HydrateVisualizationRows;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Foundation\Http\FormRequest;
@@ -20,8 +19,8 @@ use Illuminate\Support\Collection;
 
 abstract class DataGrid extends Visualization
 {
-    /** @var Collection<int, Visualizable>|null */
-    protected ?Collection $visualizables = null;
+    /** @var Collection<int, Column>|null */
+    private ?Collection $columns = null;
 
     /**
      * Used to define the columns that will be available in the data grid
@@ -34,18 +33,6 @@ abstract class DataGrid extends Visualization
      * The base query for the data grid.
      */
     abstract public function getQuery(): Builder;
-
-    /**
-     * Memoised: a data request asks twice, once to build the statement and once to hydrate, and both
-     * must see the same column objects — matching a hydrator's key against a second, separately built
-     * graph would trust getColumns() to be pure.
-     *
-     * @return Collection<int, Visualizable>
-     */
-    public function getVisualizables(): Collection
-    {
-        return $this->visualizables ??= parent::getVisualizables();
-    }
 
     /**
      * Prefix for the route name.  Example: 'grids' would result in 'grids.users'
@@ -84,7 +71,11 @@ abstract class DataGrid extends Visualization
      */
     public function hydrate(Collection $rows): Collection
     {
-        return HydrateVisualizationRows::make()->handle($rows, $this->getVisualizables());
+        $this->columns()
+            ->whereInstanceOf(HydratedColumn::class)
+            ->each(fn (HydratedColumn $column) => $column->hydrate($rows, $this->keyFieldFor($column)));
+
+        return $rows;
     }
 
     /**
@@ -113,14 +104,14 @@ abstract class DataGrid extends Visualization
     protected function getSchemaBody(): array
     {
         return [
-            'columns' => $this->getColumns()->map->toArray(),
+            'columns' => $this->columns()->map->toArray(),
             'default_sorts' => $this->getDefaultSorts()->map->toArray(),
         ];
     }
 
     protected function getPrimaryVisualizables(): Collection
     {
-        return $this->getColumns();
+        return $this->columns();
     }
 
     /**
@@ -156,5 +147,46 @@ abstract class DataGrid extends Visualization
         }
 
         return [...$payload, 'data' => $this->hydrate($payload['data'])];
+    }
+
+    /**
+     * Memoised: a data request asks twice, once to build the statement and once to hydrate, and both
+     * must see the same column objects — matching a hydrator's key against a second, separately built
+     * graph would trust getColumns() to be pure.
+     *
+     * @return Collection<int, Column>
+     */
+    private function columns(): Collection
+    {
+        return $this->columns ??= $this->getColumns();
+    }
+
+    /**
+     * The payload field ('column_ID') behind a hydrator's declared key ('ID').
+     *
+     * Only a column the statement selects can key a row; a hydrated column holds no value yet.
+     * Floating filters are never selected either, and are not columns, so they cannot match here.
+     *
+     * @throws Exception
+     */
+    private function keyFieldFor(HydratedColumn $column): string
+    {
+        $hydrator = $column->getHydrator();
+        $declaredField = $hydrator->keyedBy();
+
+        $keyColumn = $this->columns()->first(
+            fn (Column $candidate): bool => $candidate->hasExpression()
+                && $candidate->getField() === $candidate->getFieldPrefix().$declaredField
+        );
+
+        if (! $keyColumn instanceof Column) {
+            throw new Exception(sprintf(
+                "%s keys on '%s', which is not a column on this grid.",
+                $hydrator::class,
+                $declaredField,
+            ));
+        }
+
+        return $keyColumn->getField();
     }
 }

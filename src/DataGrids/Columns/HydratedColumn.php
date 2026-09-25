@@ -4,7 +4,10 @@ namespace Dashworthy\Visualizations\DataGrids\Columns;
 
 use Dashworthy\Visualizations\Contracts\HydratorContract;
 use Dashworthy\Visualizations\DataGrids\Abstracts\Column;
+use Exception;
+use Illuminate\Support\Collection;
 use LogicException;
+use stdClass;
 
 /**
  * A column filled after the page is fetched, rather than selected alongside it.
@@ -78,6 +81,42 @@ class HydratedColumn extends Column
         $resolved = app($this->hydrator);
 
         return $this->hydrator = $resolved;
+    }
+
+    /**
+     * Fills this column on every row of a fetched page, with one resolve() for the whole page.
+     *
+     * @param  Collection<int, stdClass>  $rows  written in place
+     * @param  string  $keyField  the payload field ('column_ID') holding each row's key
+     *
+     * @throws Exception
+     */
+    public function hydrate(Collection $rows, string $keyField): void
+    {
+        $field = $this->getField();
+
+        if ($field === $keyField) {
+            throw new Exception("Hydrated column '{$field}' collides with the field its hydrator keys on.");
+        }
+
+        // Strictly, because the write-back indexes by array-key identity: '01' and 1 compare equal.
+        $keys = $rows
+            ->map(fn (stdClass $row): mixed => $row->{$keyField} ?? null)
+            ->reject(fn (mixed $key): bool => $key === null)
+            ->map(fn (mixed $key): int|string => is_int($key) || is_string($key) ? $key : throw new Exception(
+                "Field '{$keyField}' holds a ".get_debug_type($key).'; a hydrator can only be keyed by an int or a string.'
+            ))
+            ->unique(strict: true)
+            ->values();
+
+        // An empty page, or one with only null keys, should not cost a query.
+        $resolved = $keys->isEmpty() ? [] : $this->getHydrator()->resolve($keys);
+
+        foreach ($rows as $row) {
+            $key = $row->{$keyField} ?? null;
+
+            $row->{$field} = $key === null ? null : ($resolved[$key] ?? null);
+        }
     }
 
     /**

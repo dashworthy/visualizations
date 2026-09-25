@@ -8,7 +8,7 @@ use stdClass;
 /**
  * Hydrates without touching the rows it was given, returning fresh ones instead.
  *
- * HydrateVisualizationRows writes onto the rows in place, so the paginated branch would look
+ * Hydration writes onto the rows in place, so the paginated branch would look
  * correct even if it ignored what hydrate() returned. This grid removes that coincidence: only
  * the returned collection carries the value.
  */
