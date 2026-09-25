@@ -67,10 +67,9 @@ Every row gets the field, whether or not its key resolved: a key missing from th
 | Area | Unit | Responsibility |
 |---|---|---|
 | Boundary | `Contracts\HydratorContract` | The three things a hydrator declares: what keys it, what type it produces, how a page resolves. Owns no rows |
-| Column | `DataGrids\Columns\HydratedColumn` | A `Column` carrying a hydrator instead of SQL. Never sortable or filterable; takes its type from the hydrator |
-| Post-fetch step | `Query\HydrateVisualizationRows` | Key extraction, dedupe, the single `resolve()` call, write-back. The only place a per-row query could have appeared |
+| Column | `DataGrids\Columns\HydratedColumn` | A `Column` carrying a hydrator instead of SQL. Never sortable or filterable; takes its type from the hydrator. Its `hydrate()` fills itself on a page: key extraction, dedupe, the single `resolve()` call, write-back — the only place a per-row query could have appeared |
 | Statement | `Query\GenerateVisualizationQuery` | Excludes hydrated columns from the select, and from the field lookup a sort or filter resolves through |
-| Seam | `DataGrids\Abstracts\DataGrid::hydrate()` | The one public step both the grid path and an export call |
+| Seam | `DataGrids\Abstracts\DataGrid::hydrate()` | The one public step both the grid path and an export call. Finds each hydrated column's key among the grid's columns, then hands the page to the column |
 | Generator | `make:hydrator` | Scaffolds a hydrator into `app/Hydrators/` |
 
 ### Declaring a column
@@ -90,7 +89,7 @@ A class-string is resolved on first use and memoised, not in `for()`: declaring 
 
 | Rule | Why, and what happens |
 |---|---|
-| `keyedBy()` names the field as the grid declared it — `'ID'`, not `'column_ID'` | The `column_` prefix is `Visualizable`'s business. `HydrateVisualizationRows` resolves the declared name against the columns the statement actually selected — a floating filter of the same name does not count — and a name matching none throws, naming the field and the hydrator class |
+| `keyedBy()` names the field as the grid declared it — `'ID'`, not `'column_ID'` | The `column_` prefix is `Visualizable`'s business. `DataGrid` resolves the declared name against its own columns that the statement selects — a floating filter of the same name is not a column, so it does not count — and a name matching none throws, naming the field and the hydrator class |
 | A hydrated column is never sortable or filterable | The value does not exist when the page is chosen, so a sort or filter could not be honoured. Enforced server-side, not just advertised: the schema flags tell the front-end, and `GenerateVisualizationQuery` additionally refuses to resolve the field, so a stale client asking for it is ignored like an unknown field |
 | `resolve()` is called at most once per page, per hydrated column — and not at all when the page yields no keys | Not a per-page hook — an empty page, or one whose keys are all null, skips it entirely, so a hydrator cannot use it to warm a cache |
 | Keys are `int` or `string` only | Those are the types PHP can index an array by. Anything else throws, naming the field and the type, rather than truncating a float or coercing a bool |
@@ -99,7 +98,7 @@ A class-string is resolved on first use and memoised, not in `for()`: declaring 
 | Hydrated columns cannot key one another, and a hydrated column may not collide with the field it keys on | Both throw. The first holds no value yet; the second would overwrite the key in place, and any later hydrator on that key would read hydrated values as keys |
 | Scoping is the hydrator's own job | This package holds no tenant or authorization context and never writes a hydration query; the source may have its own permission model. Return an empty map to decline the work without querying |
 | Hydration is invisible to `VisualizationQueryExecuted` | It runs after the event, so `durationMs` times the main query alone — and a hydration failure 500s a request whose event already fired successfully |
-| `getVisualizables()` is memoised per grid instance | A data request asks twice — once to build the statement, once to hydrate — and both must see the same column objects, or a hydrator's key would resolve against a separately built graph. Changed in this feature: a grid whose `getColumns()` varies with state now gets the first graph for the rest of the instance's life |
+| `getColumns()` is called once per grid instance | A data request needs the columns twice — once to build the statement, once to hydrate — and both must see the same column objects, or a hydrator's key would resolve against a separately built graph. Changed in this feature: a grid whose `getColumns()` varies with state now gets the first graph for the rest of the instance's life |
 
 ### Export parity — opt-in, and unenforced
 
@@ -118,14 +117,15 @@ public function handleExport(DataGridDataRequest $request): JsonResponse
 
 Because there is one implementation, the two paths cannot differ in *how* they hydrate. They can differ in *whether* they do. **`handleExport` is not part of this package** — the service provider routes it only if your grid happens to define the method. An export that never calls `hydrate()` ships an empty column, and nothing here can detect it. Exports are also expected to run queued, so an async export hydrates outside the request — a hydrator scoping to the current user or tenant has no such context there.
 
-Reach the statement through `getVisualizables()`, as above, rather than building a second graph of your own — see the memoisation invariant.
+Reach the statement through `getVisualizables()`, as above, rather than building a second graph of your own — see the `getColumns()` invariant.
 
 ---
 
 ## 🚀 Development & testing
 
 ```bash
-vendor/bin/pest tests/Query/HydrateVisualizationRowsTest.php     # the post-fetch step, in isolation
+vendor/bin/pest tests/DataGrids/Columns/HydratedColumnTest.php  # the post-fetch fill, in isolation
+vendor/bin/pest tests/DataGrids/Grids/DataGridHydrateTest.php   # resolving each hydrator's key on the grid
 vendor/bin/pest tests/DataGrids/Grids/HydratedColumnGridTest.php # the success criteria, against a real second table
 vendor/bin/pest tests/DataGrids/Grids/HydratingDataGridTest.php  # both branches of the grid data path
 vendor/bin/pest                                                  # full suite
