@@ -4,6 +4,7 @@ namespace Dashworthy\Visualizations\Query;
 
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\SortData;
@@ -17,7 +18,7 @@ class GenerateVisualizationQuery
     /** @var Collection<int, Visualizable> */
     private Collection $visualizables;
 
-    private FilterOperation $filterOperation;
+    private FilterOperationContract $filterOperation;
 
     public static function make(): self
     {
@@ -30,7 +31,7 @@ class GenerateVisualizationQuery
     public function handle(Builder $query, Collection $visualizables, VisualizationData $visualizationData): Builder
     {
         $this->visualizables = $visualizables;
-        $this->filterOperation = app(FilterOperation::class);
+        $this->filterOperation = app(FilterOperationContract::class);
 
         $this->applyFilterSets($query, $visualizationData->filterSets);
         $this->applySorts($query, $visualizationData->sorts);

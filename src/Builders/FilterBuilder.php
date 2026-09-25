@@ -20,7 +20,7 @@ class FilterBuilder
     }
 
     /**
-     * A string that names a built-in operator becomes its enum case; any other string names a FilterOperation macro.
+     * A string that names a built-in operator becomes its enum case; any other string is a custom operator key.
      */
     public function addFilter(string $field, mixed $value, FilterOperator|string $filterOperator): self
     {

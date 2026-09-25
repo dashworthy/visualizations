@@ -3,46 +3,47 @@
 namespace Dashworthy\Visualizations\Query;
 
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Traits\Macroable;
 use InvalidArgumentException;
 
 /**
  * Compiles a filter into a where or having clause. Each built-in operator has its own method.
  *
- * An application adds an operator, or replaces a built-in one, with a macro named for the operator's key:
+ * An application replaces an operator by overriding its method, or adds one by overriding operators() and
+ * compile(), then binds its subclass to FilterOperationContract:
  *
- *     FilterOperation::macro('regexp', fn (string $column, array $columnBindings, mixed $value): array => [
- *         "$column REGEXP ?", [...$columnBindings, $value],
- *     ]);
+ *     class AppFilterOperation extends FilterOperation
+ *     {
+ *         public function operators(): array
+ *         {
+ *             return [...parent::operators(), 'regexp'];
+ *         }
  *
- * A macro returns the SQL condition, with a `?` for each binding, and its bindings in placeholder order.
+ *         protected function compile(Visualizable $visualizable, FilterData $filterData): array
+ *         {
+ *             return match ($filterData->getOperatorKey()) {
+ *                 'regexp' => [$visualizable->getFilterWith().' REGEXP ?', [...$visualizable->getFilterWithBindings(), $filterData->value]],
+ *                 default => parent::compile($visualizable, $filterData),
+ *             };
+ *         }
+ *     }
  */
-class FilterOperation
+class FilterOperation implements FilterOperationContract
 {
-    use Macroable;
-
     /**
-     * Every operator key a filter may use: the built-in operators, then the registered macros.
-     *
      * @return list<string>
      */
-    public static function operators(): array
+    public function operators(): array
     {
-        return array_values(array_unique([
-            ...array_map(fn (FilterOperator $filterOperator): string => $filterOperator->value, FilterOperator::cases()),
-            ...array_keys(static::$macros),
-        ]));
+        return array_map(fn (FilterOperator $filterOperator): string => $filterOperator->value, FilterOperator::cases());
     }
 
-    /**
-     * Applies the filter's condition as a where or having clause, joined to its filter set with AND or OR.
-     */
     public function handle(Builder $query, Visualizable $visualizable, FilterData $filterData, FilterSetOperator $filterSetOperator = FilterSetOperator::AND): Builder
     {
         [$expression, $bindings] = $this->compile($visualizable, $filterData);
@@ -50,10 +51,8 @@ class FilterOperation
         $method = $this->getQueryMethod($visualizable, $filterSetOperator);
         $query->$method($expression, $bindings);
 
-        // A null in a built-in IN or NOT IN list needs its own clause
-        if (! static::hasMacro($filterData->getOperatorKey())
-            && $this->isSetOperator($filterData->filterOperator)
-            && in_array(null, $this->getNormalizedValues($filterData->value))) {
+        // A null in an IN or NOT IN list needs its own clause
+        if ($this->isSetOperator($filterData->filterOperator) && in_array(null, $this->getNormalizedValues($filterData->value))) {
             $filterData->filterOperator === FilterOperator::IN
                 ? $query->orWhereNull($visualizable->getFilterWith())
                 : $query->orWhereNotNull($visualizable->getFilterWith());
@@ -64,24 +63,18 @@ class FilterOperation
 
     /**
      * The SQL condition for the filter's operator, with a `?` for each binding, and its bindings in placeholder
-     * order: the visualizable's filter bindings, then the filter value. A macro named for the operator wins over
-     * the built-in method.
+     * order: the visualizable's filter bindings, then the filter value.
      *
      * @return array{0: string, 1: array<int, mixed>}
      */
-    private function compile(Visualizable $visualizable, FilterData $filterData): array
+    protected function compile(Visualizable $visualizable, FilterData $filterData): array
     {
         $column = $visualizable->getFilterWith();
         $columnBindings = $visualizable->getFilterWithBindings();
         $value = $filterData->value;
-        $operator = $filterData->getOperatorKey();
-
-        if (static::hasMacro($operator)) {
-            return $this->__call($operator, [$column, $columnBindings, $value]);
-        }
 
         if (! $filterData->filterOperator instanceof FilterOperator) {
-            throw new InvalidArgumentException("No filter operator or macro named [$operator].");
+            throw new InvalidArgumentException("No filter operator named [{$filterData->getOperatorKey()}].");
         }
 
         return match ($filterData->filterOperator) {

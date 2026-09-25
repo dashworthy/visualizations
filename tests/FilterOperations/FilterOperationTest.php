@@ -1,12 +1,12 @@
 <?php
 
 use Dashworthy\Visualizations\Abstracts\Visualizable;
+use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Query\FilterOperation;
+use Dashworthy\Visualizations\Tests\Fixtures\RegexpFilterOperation;
 use Illuminate\Database\Query\Builder;
-
-afterEach(fn () => FilterOperation::flushMacros());
 
 function mockFilterVisualizable(): Visualizable
 {
@@ -36,7 +36,7 @@ test('every filter operator applies a condition', function (FilterOperator $filt
 })->with(FilterOperator::cases());
 
 test('a subclass bound in the container replaces an operator\'s condition', function () {
-    app()->bind(FilterOperation::class, fn () => new class extends FilterOperation
+    app()->bind(FilterOperationContract::class, fn () => new class extends FilterOperation
     {
         protected function equals(string $column, array $columnBindings, mixed $value): array
         {
@@ -52,40 +52,28 @@ test('a subclass bound in the container replaces an operator\'s condition', func
 
     $query->shouldReceive('whereRaw')->once()->with('key <=> ?', ['value'])->andReturnSelf();
 
-    expect(app(FilterOperation::class)->handle($query, $visualizable, new FilterData('key', 'value', FilterOperator::EQUALS)))->toBe($query);
+    expect(app(FilterOperationContract::class)->handle($query, $visualizable, new FilterData('key', 'value', FilterOperator::EQUALS)))->toBe($query);
 });
 
-test('a macro adds an operator', function () {
-    FilterOperation::macro('regexp', fn (string $column, array $columnBindings, mixed $value): array => [
-        "$column REGEXP ?", [...$columnBindings, $value],
-    ]);
+test('the contract resolves to FilterOperation by default', function () {
+    expect(app(FilterOperationContract::class))->toBeInstanceOf(FilterOperation::class);
+});
+
+test('a subclass adds an operator through operators() and compile()', function () {
+    $filterOperation = new RegexpFilterOperation;
 
     $query = Mockery::mock(Builder::class);
     $query->shouldReceive('whereRaw')->once()->with('key REGEXP ?', ['column-binding', '^a'])->andReturnSelf();
 
-    expect((new FilterOperation)->handle($query, mockFilterVisualizable(), new FilterData('key', '^a', 'regexp')))->toBe($query);
+    expect($filterOperation->operators())->toContain('regexp', FilterOperator::EQUALS->value)
+        ->and($filterOperation->handle($query, mockFilterVisualizable(), new FilterData('key', '^a', 'regexp')))->toBe($query);
 });
 
-test('a macro named for a built-in operator replaces it', function () {
-    FilterOperation::macro(FilterOperator::IN->value, fn (string $column, array $columnBindings, mixed $value): array => [
-        "FIND_IN_SET($column, ?)", [...$columnBindings, implode(',', $value)],
-    ]);
-
-    $query = Mockery::mock(Builder::class);
-    $query->shouldReceive('whereRaw')->once()->with('FIND_IN_SET(key, ?)', ['column-binding', 'a,'])->andReturnSelf();
-    $query->shouldNotReceive('orWhereNull');
-
-    (new FilterOperation)->handle($query, mockFilterVisualizable(), new FilterData('key', ['a', null], FilterOperator::IN));
-});
-
-test('an operator with no method or macro is rejected', function () {
+test('an operator the implementation does not know is rejected', function () {
     (new FilterOperation)->handle(Mockery::mock(Builder::class), mockFilterVisualizable(), new FilterData('key', 'a', 'regexp'));
-})->throws(InvalidArgumentException::class, 'No filter operator or macro named [regexp].');
+})->throws(InvalidArgumentException::class, 'No filter operator named [regexp].');
 
-test('operators lists the built-in operators and the macros', function () {
-    FilterOperation::macro('regexp', fn () => ['', []]);
-
-    expect(FilterOperation::operators())
-        ->toContain(FilterOperator::EQUALS->value, FilterOperator::GREATER_THAN->value, 'regexp')
-        ->toHaveCount(count(FilterOperator::cases()) + 1);
+test('operators lists every built-in operator', function () {
+    expect((new FilterOperation)->operators())
+        ->toBe(array_map(fn (FilterOperator $filterOperator): string => $filterOperator->value, FilterOperator::cases()));
 });

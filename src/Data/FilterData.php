@@ -13,7 +13,7 @@ class FilterData
     ) {}
 
     /**
-     * The operator's wire key: the enum's value for a built-in operator, the macro name for a custom one.
+     * The operator's wire key: the enum's value for a built-in operator, the key an application's FilterOperationContract adds for a custom one.
      */
     public function getOperatorKey(): string
     {

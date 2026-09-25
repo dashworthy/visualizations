@@ -1,5 +1,6 @@
 <?php
 
+use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\VisualizationData;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 it('resolves the filter operation once per query', function () {
     $resolved = 0;
-    app()->bind(FilterOperation::class, function () use (&$resolved) {
+    app()->bind(FilterOperationContract::class, function () use (&$resolved) {
         $resolved++;
 
         return new FilterOperation;

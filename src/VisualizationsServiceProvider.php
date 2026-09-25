@@ -5,10 +5,12 @@ namespace Dashworthy\Visualizations;
 use Dashworthy\Visualizations\Abstracts\Visualization;
 use Dashworthy\Visualizations\Charts\Abstracts\Chart;
 use Dashworthy\Visualizations\Charts\Commands\MakeChartCommand;
+use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Commands\MakeDataGridCommand;
 use Dashworthy\Visualizations\Metrics\Abstracts\Metric;
 use Dashworthy\Visualizations\Metrics\Commands\MakeMetricCommand;
+use Dashworthy\Visualizations\Query\FilterOperation;
 use Illuminate\Support\Facades\Route;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -29,6 +31,8 @@ class VisualizationsServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
+        $this->app->bindIf(FilterOperationContract::class, FilterOperation::class);
+
         /**
          * Checks the class is a visualization of the expected base, then registers its data and schema routes.
          *

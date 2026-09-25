@@ -3,8 +3,8 @@
 namespace Dashworthy\Visualizations\Rules;
 
 use Closure;
+use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
-use Dashworthy\Visualizations\Query\FilterOperation;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Contracts\Validation\ValidatorAwareRule;
 use Illuminate\Support\Facades\Validator as ValidatorFacade;
@@ -31,7 +31,7 @@ class FilterSetRule implements ValidationRule, ValidatorAwareRule
                 'filters' => ['required', 'array'],
                 'filters.*.field' => ['required', 'string', 'min:1'],
                 'filters.*.value' => ['present'],
-                'filters.*.filter_operator' => ['required', Rule::in(FilterOperation::operators())],
+                'filters.*.filter_operator' => ['required', Rule::in(app(FilterOperationContract::class)->operators())],
             ]
         );
 

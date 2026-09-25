@@ -1,9 +1,10 @@
 <?php
 
+use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
-use Dashworthy\Visualizations\Query\FilterOperation;
 use Dashworthy\Visualizations\Rules\FilterSetRule;
+use Dashworthy\Visualizations\Tests\Fixtures\RegexpFilterOperation;
 use Illuminate\Support\Facades\Validator;
 
 it('validates filter set structure', function () {
@@ -57,7 +58,7 @@ it('fails with missing fields', function () {
 
 });
 
-it('accepts a macro operator and rejects an unknown one', function () {
+it('accepts the operators of the bound FilterOperationContract', function () {
     $validate = fn (string $filterOperator): bool => Validator::make(
         ['filter_sets' => [[
             'filter_set_operator' => FilterSetOperator::AND->value,
@@ -68,10 +69,8 @@ it('accepts a macro operator and rejects an unknown one', function () {
 
     expect($validate('regexp'))->toBeFalse();
 
-    FilterOperation::macro('regexp', fn () => ['', []]);
+    app()->bind(FilterOperationContract::class, RegexpFilterOperation::class);
 
     expect($validate('regexp'))->toBeTrue()
         ->and($validate(FilterOperator::EQUALS->value))->toBeTrue();
-
-    FilterOperation::flushMacros();
 });
