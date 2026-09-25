@@ -18,7 +18,7 @@ use InvalidArgumentException;
  * An application replaces an operator by overriding its method, or adds one by overriding operators() and
  * compile(), then binds its subclass to FilterOperationContract:
  *
- *     class AppFilterOperation extends MariaFilterOperation
+ *     class AppFilterOperation extends MariaDbFilterOperation
  *     {
  *         public function operators(): array
  *         {
@@ -34,7 +34,7 @@ use InvalidArgumentException;
  *         }
  *     }
  */
-class MariaFilterOperation implements FilterOperationContract
+class MariaDbFilterOperation implements FilterOperationContract
 {
     /**
      * @return list<string>

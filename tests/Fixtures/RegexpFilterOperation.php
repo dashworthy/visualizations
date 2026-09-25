@@ -4,9 +4,9 @@ namespace Dashworthy\Visualizations\Tests\Fixtures;
 
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
-use Dashworthy\Visualizations\Query\MariaFilterOperation;
+use Dashworthy\Visualizations\Query\MariaDbFilterOperation;
 
-class RegexpFilterOperation extends MariaFilterOperation
+class RegexpFilterOperation extends MariaDbFilterOperation
 {
     public function operators(): array
     {

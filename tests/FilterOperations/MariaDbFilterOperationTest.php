@@ -4,7 +4,7 @@ use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\Query\MariaFilterOperation;
+use Dashworthy\Visualizations\Query\MariaDbFilterOperation;
 use Dashworthy\Visualizations\Tests\Fixtures\RegexpFilterOperation;
 use Illuminate\Database\Query\Builder;
 
@@ -32,11 +32,11 @@ test('every filter operator applies a condition', function (FilterOperator $filt
         ->with(Mockery::on(fn (string $expression): bool => str_starts_with(ltrim($expression, '('), 'key ')), Mockery::type('array'))
         ->andReturnSelf();
 
-    expect((new MariaFilterOperation)->handle($query, $visualizable, $filterData))->toBe($query);
+    expect((new MariaDbFilterOperation)->handle($query, $visualizable, $filterData))->toBe($query);
 })->with(FilterOperator::cases());
 
 test('a subclass bound in the container replaces an operator\'s condition', function () {
-    app()->bind(FilterOperationContract::class, fn () => new class extends MariaFilterOperation
+    app()->bind(FilterOperationContract::class, fn () => new class extends MariaDbFilterOperation
     {
         protected function equals(string $column, array $columnBindings, mixed $value): array
         {
@@ -55,8 +55,8 @@ test('a subclass bound in the container replaces an operator\'s condition', func
     expect(app(FilterOperationContract::class)->handle($query, $visualizable, new FilterData('key', 'value', FilterOperator::EQUALS)))->toBe($query);
 });
 
-test('the contract resolves to MariaFilterOperation by default', function () {
-    expect(app(FilterOperationContract::class))->toBeInstanceOf(MariaFilterOperation::class);
+test('the contract resolves to MariaDbFilterOperation by default', function () {
+    expect(app(FilterOperationContract::class))->toBeInstanceOf(MariaDbFilterOperation::class);
 });
 
 test('a subclass adds an operator through operators() and compile()', function () {
@@ -70,10 +70,10 @@ test('a subclass adds an operator through operators() and compile()', function (
 });
 
 test('an operator the implementation does not know is rejected', function () {
-    (new MariaFilterOperation)->handle(Mockery::mock(Builder::class), mockFilterVisualizable(), new FilterData('key', 'a', 'regexp'));
+    (new MariaDbFilterOperation)->handle(Mockery::mock(Builder::class), mockFilterVisualizable(), new FilterData('key', 'a', 'regexp'));
 })->throws(InvalidArgumentException::class, 'No filter operator named [regexp].');
 
 test('operators lists every built-in operator', function () {
-    expect((new MariaFilterOperation)->operators())
+    expect((new MariaDbFilterOperation)->operators())
         ->toBe(array_map(fn (FilterOperator $filterOperator): string => $filterOperator->value, FilterOperator::cases()));
 });
