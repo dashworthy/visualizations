@@ -3,7 +3,7 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\Query\FilterOperation;
+use Dashworthy\Visualizations\Query\MariaFilterOperation;
 use Illuminate\Database\Query\Builder;
 
 test('handles not null values', function () {
@@ -24,7 +24,7 @@ test('handles not null values', function () {
         ->with('key')
         ->andReturnSelf();
 
-    $filter = new FilterOperation;
+    $filter = new MariaFilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);
@@ -49,7 +49,7 @@ test('handles with null values', function () {
         ->with('key')
         ->andReturnSelf();
 
-    $filter = new FilterOperation;
+    $filter = new MariaFilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);

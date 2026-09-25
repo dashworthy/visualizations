@@ -10,9 +10,9 @@ use Illuminate\Database\Query\Builder;
 /**
  * Turns a filter into a clause on the visualization's query.
  *
- * The package binds this to `Query\FilterOperation`. An application that needs
- * different SQL for an operator, or operators of its own, binds its own
- * implementation instead — usually a subclass of `FilterOperation` — and
+ * The package binds this to `Query\MariaFilterOperation`, which writes MariaDB SQL.
+ * An application that needs a different database, different SQL for an operator, or operators of its own, binds its own
+ * implementation instead — usually a subclass of `MariaFilterOperation` — and
  * `GenerateVisualizationQuery` and `FilterSetRule` pick it up.
  *
  * `operators()` is the set of keys a filter may send. Implementors own any

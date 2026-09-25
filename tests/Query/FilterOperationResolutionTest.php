@@ -7,8 +7,8 @@ use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
-use Dashworthy\Visualizations\Query\FilterOperation;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
+use Dashworthy\Visualizations\Query\MariaFilterOperation;
 use Illuminate\Support\Facades\DB;
 
 it('resolves the filter operation once per query', function () {
@@ -16,7 +16,7 @@ it('resolves the filter operation once per query', function () {
     app()->bind(FilterOperationContract::class, function () use (&$resolved) {
         $resolved++;
 
-        return new FilterOperation;
+        return new MariaFilterOperation;
     });
 
     $data = new VisualizationData;

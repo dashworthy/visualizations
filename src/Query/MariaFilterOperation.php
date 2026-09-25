@@ -13,12 +13,12 @@ use Illuminate\Support\Collection;
 use InvalidArgumentException;
 
 /**
- * Compiles a filter into a where or having clause. Each built-in operator has its own method.
+ * Compiles a filter into a MariaDB where or having clause. Each built-in operator has its own method.
  *
  * An application replaces an operator by overriding its method, or adds one by overriding operators() and
  * compile(), then binds its subclass to FilterOperationContract:
  *
- *     class AppFilterOperation extends FilterOperation
+ *     class AppFilterOperation extends MariaFilterOperation
  *     {
  *         public function operators(): array
  *         {
@@ -34,7 +34,7 @@ use InvalidArgumentException;
  *         }
  *     }
  */
-class FilterOperation implements FilterOperationContract
+class MariaFilterOperation implements FilterOperationContract
 {
     /**
      * @return list<string>

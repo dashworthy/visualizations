@@ -10,7 +10,7 @@ use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Commands\MakeDataGridCommand;
 use Dashworthy\Visualizations\Metrics\Abstracts\Metric;
 use Dashworthy\Visualizations\Metrics\Commands\MakeMetricCommand;
-use Dashworthy\Visualizations\Query\FilterOperation;
+use Dashworthy\Visualizations\Query\MariaFilterOperation;
 use Illuminate\Support\Facades\Route;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -31,7 +31,7 @@ class VisualizationsServiceProvider extends PackageServiceProvider
 
     public function packageRegistered(): void
     {
-        $this->app->bindIf(FilterOperationContract::class, FilterOperation::class);
+        $this->app->bindIf(FilterOperationContract::class, MariaFilterOperation::class);
 
         /**
          * Checks the class is a visualization of the expected base, then registers its data and schema routes.
