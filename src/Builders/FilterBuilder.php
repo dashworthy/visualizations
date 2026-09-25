@@ -19,8 +19,15 @@ class FilterBuilder
         $this->filters = collect();
     }
 
-    public function addFilter(string $field, mixed $value, FilterOperator $filterOperator): self
+    /**
+     * A string that names a built-in operator becomes its enum case; any other string names a FilterOperation macro.
+     */
+    public function addFilter(string $field, mixed $value, FilterOperator|string $filterOperator): self
     {
+        if (is_string($filterOperator)) {
+            $filterOperator = FilterOperator::tryFrom($filterOperator) ?? $filterOperator;
+        }
+
         $this->filters->push(new FilterData($field, $value, $filterOperator));
 
         return $this;

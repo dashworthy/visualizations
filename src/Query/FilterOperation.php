@@ -9,9 +9,37 @@ use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Traits\Macroable;
+use InvalidArgumentException;
 
+/**
+ * Compiles a filter into a where or having clause. Each built-in operator has its own method.
+ *
+ * An application adds an operator, or replaces a built-in one, with a macro named for the operator's key:
+ *
+ *     FilterOperation::macro('regexp', fn (string $column, array $columnBindings, mixed $value): array => [
+ *         "$column REGEXP ?", [...$columnBindings, $value],
+ *     ]);
+ *
+ * A macro returns the SQL condition, with a `?` for each binding, and its bindings in placeholder order.
+ */
 class FilterOperation
 {
+    use Macroable;
+
+    /**
+     * Every operator key a filter may use: the built-in operators, then the registered macros.
+     *
+     * @return list<string>
+     */
+    public static function operators(): array
+    {
+        return array_values(array_unique([
+            ...array_map(fn (FilterOperator $filterOperator): string => $filterOperator->value, FilterOperator::cases()),
+            ...array_keys(static::$macros),
+        ]));
+    }
+
     /**
      * Applies the filter's condition as a where or having clause, joined to its filter set with AND or OR.
      */
@@ -22,8 +50,10 @@ class FilterOperation
         $method = $this->getQueryMethod($visualizable, $filterSetOperator);
         $query->$method($expression, $bindings);
 
-        // A null in an IN or NOT IN list needs its own clause
-        if ($this->isSetOperator($filterData->filterOperator) && in_array(null, $this->getNormalizedValues($filterData->value))) {
+        // A null in a built-in IN or NOT IN list needs its own clause
+        if (! static::hasMacro($filterData->getOperatorKey())
+            && $this->isSetOperator($filterData->filterOperator)
+            && in_array(null, $this->getNormalizedValues($filterData->value))) {
             $filterData->filterOperator === FilterOperator::IN
                 ? $query->orWhereNull($visualizable->getFilterWith())
                 : $query->orWhereNotNull($visualizable->getFilterWith());
@@ -34,7 +64,8 @@ class FilterOperation
 
     /**
      * The SQL condition for the filter's operator, with a `?` for each binding, and its bindings in placeholder
-     * order: the visualizable's filter bindings, then the filter value.
+     * order: the visualizable's filter bindings, then the filter value. A macro named for the operator wins over
+     * the built-in method.
      *
      * @return array{0: string, 1: array<int, mixed>}
      */
@@ -43,6 +74,15 @@ class FilterOperation
         $column = $visualizable->getFilterWith();
         $columnBindings = $visualizable->getFilterWithBindings();
         $value = $filterData->value;
+        $operator = $filterData->getOperatorKey();
+
+        if (static::hasMacro($operator)) {
+            return $this->__call($operator, [$column, $columnBindings, $value]);
+        }
+
+        if (! $filterData->filterOperator instanceof FilterOperator) {
+            throw new InvalidArgumentException("No filter operator or macro named [$operator].");
+        }
 
         return match ($filterData->filterOperator) {
             FilterOperator::EQUALS => $this->equals($column, $columnBindings, $value),
@@ -215,7 +255,7 @@ class FilterOperation
         return ["$column $operator ($placeholders)", [...$columnBindings, ...$values]];
     }
 
-    private function isSetOperator(FilterOperator $filterOperator): bool
+    private function isSetOperator(FilterOperator|string $filterOperator): bool
     {
         return $filterOperator === FilterOperator::IN || $filterOperator === FilterOperator::NOT_IN;
     }

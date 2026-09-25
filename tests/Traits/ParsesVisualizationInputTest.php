@@ -32,6 +32,22 @@ test('parseFilterSets builds filter sets from array', function () use ($getTrait
     expect($result->first()->filters->first()->value)->toBe('foo');
 });
 
+test('parseFilterSets keeps built-in operators as enum cases and custom ones as their key', function () use ($getTrait) {
+    $filters = $getTrait()->parseFilterSets([
+        [
+            'filter_set_operator' => FilterSetOperator::AND->value,
+            'filters' => [
+                ['field' => 'column_name', 'value' => 'foo', 'filter_operator' => FilterOperator::EQUALS->value],
+                ['field' => 'column_name', 'value' => '^f', 'filter_operator' => 'regexp'],
+            ],
+        ],
+    ])->first()->filters;
+
+    expect($filters->first()->filterOperator)->toBe(FilterOperator::EQUALS)
+        ->and($filters->last()->filterOperator)->toBe('regexp')
+        ->and($filters->last()->toArray()['filter_operator'])->toBe('regexp');
+});
+
 test('parseSorts returns empty collection for empty input', function () use ($getTrait) {
     $result = $getTrait()->parseSorts([]);
     expect($result)->toHaveCount(0);
