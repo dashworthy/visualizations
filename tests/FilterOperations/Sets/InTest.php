@@ -3,14 +3,8 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\FilterOperations\Sets\In;
+use Dashworthy\Visualizations\Query\FilterOperation;
 use Illuminate\Database\Query\Builder;
-
-test('can handle', function () {
-    $filter = new In;
-
-    expect($filter->canHandle(FilterOperator::IN))->toBeTrue();
-});
 
 test('handles not null values', function () {
     $query = Mockery::mock(Builder::class);
@@ -30,7 +24,7 @@ test('handles not null values', function () {
         ->with('key')
         ->andReturnSelf();
 
-    $filter = new In;
+    $filter = new FilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);
@@ -55,7 +49,7 @@ test('handles with null values', function () {
         ->with('key')
         ->andReturnSelf();
 
-    $filter = new In;
+    $filter = new FilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);

@@ -3,14 +3,8 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\FilterOperations\Equality\Equals;
+use Dashworthy\Visualizations\Query\FilterOperation;
 use Illuminate\Database\Query\Builder;
-
-test('can handle', function () {
-    $filter = new Equals;
-
-    expect($filter->canHandle(FilterOperator::EQUALS))->toBeTrue();
-});
 
 test('handles the filter', function () {
     $query = Mockery::mock(Builder::class);
@@ -26,7 +20,7 @@ test('handles the filter', function () {
         ->with('created_at = ?', ['2023-01-01 00:00:00'])
         ->andReturnSelf();
 
-    $filter = new Equals;
+    $filter = new FilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);

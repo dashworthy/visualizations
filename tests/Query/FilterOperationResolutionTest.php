@@ -6,18 +6,17 @@ use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
-use Dashworthy\Visualizations\FilterOperations\Equality\Equals;
+use Dashworthy\Visualizations\Query\FilterOperation;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Illuminate\Support\Facades\DB;
 
-it('resolves each configured filter operation once per query', function () {
+it('resolves the filter operation once per query', function () {
     $resolved = 0;
-    app()->bind(Equals::class, function () use (&$resolved) {
+    app()->bind(FilterOperation::class, function () use (&$resolved) {
         $resolved++;
 
-        return new Equals;
+        return new FilterOperation;
     });
-    config()->set('visualizations.filters', [Equals::class]);
 
     $data = new VisualizationData;
     $data->filterSets = collect([new FilterSetData(collect([

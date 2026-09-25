@@ -3,14 +3,8 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\FilterOperations\Text\EndsWith;
+use Dashworthy\Visualizations\Query\FilterOperation;
 use Illuminate\Database\Query\Builder;
-
-test('can handle', function () {
-    $filter = new EndsWith;
-
-    expect($filter->canHandle(FilterOperator::STRING_ENDS_WITH))->toBeTrue();
-});
 
 test('handles the filter', function () {
     $query = Mockery::mock(Builder::class);
@@ -26,7 +20,7 @@ test('handles the filter', function () {
         ->with('name LIKE ?', ['%value'])
         ->andReturnSelf();
 
-    $filter = new EndsWith;
+    $filter = new FilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);

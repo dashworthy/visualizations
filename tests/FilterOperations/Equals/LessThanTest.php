@@ -3,14 +3,8 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\FilterOperations\Equality\LessThan;
+use Dashworthy\Visualizations\Query\FilterOperation;
 use Illuminate\Database\Query\Builder;
-
-test('can handle', function () {
-    $filter = new LessThan;
-
-    expect($filter->canHandle(FilterOperator::LESS_THAN))->toBeTrue();
-});
 
 test('handles the filter', function () {
     $query = Mockery::mock(Builder::class);
@@ -26,7 +20,7 @@ test('handles the filter', function () {
         ->with('quantity < ?', [10])
         ->andReturnSelf();
 
-    $filter = new LessThan;
+    $filter = new FilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);

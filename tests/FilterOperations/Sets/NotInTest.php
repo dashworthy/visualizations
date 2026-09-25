@@ -3,14 +3,8 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\FilterOperations\Sets\NotIn;
+use Dashworthy\Visualizations\Query\FilterOperation;
 use Illuminate\Database\Query\Builder;
-
-test('can handle', function () {
-    $filter = new NotIn;
-
-    expect($filter->canHandle(FilterOperator::NOT_IN))->toBeTrue();
-});
 
 test('handles without nulls', function () {
     $query = Mockery::mock(Builder::class);
@@ -30,7 +24,7 @@ test('handles without nulls', function () {
         ->with('key NOT IN (?,?)', ['value1', 'value2'])
         ->andReturnSelf();
 
-    $filter = new NotIn;
+    $filter = new FilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);
@@ -54,7 +48,7 @@ test('handles with nulls', function () {
         ->with('key')
         ->andReturnSelf();
 
-    $filter = new NotIn;
+    $filter = new FilterOperation;
     $result = $filter->handle($query, $visualizable, $filterData);
 
     expect($result)->toBe($query);

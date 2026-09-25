@@ -4,13 +4,11 @@ namespace Dashworthy\Visualizations\Query;
 
 use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
-use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
-use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 
@@ -19,8 +17,7 @@ class GenerateVisualizationQuery
     /** @var Collection<int, Visualizable> */
     private Collection $visualizables;
 
-    /** @var Collection<int, FilterOperationContract>|null */
-    private ?Collection $filterOperations = null;
+    private FilterOperation $filterOperation;
 
     public static function make(): self
     {
@@ -29,12 +26,11 @@ class GenerateVisualizationQuery
 
     /**
      * @param  Collection<int, Visualizable>  $visualizables
-     *
-     * @throws Exception
      */
     public function handle(Builder $query, Collection $visualizables, VisualizationData $visualizationData): Builder
     {
         $this->visualizables = $visualizables;
+        $this->filterOperation = app(FilterOperation::class);
 
         $this->applyFilterSets($query, $visualizationData->filterSets);
         $this->applySorts($query, $visualizationData->sorts);
@@ -57,8 +53,6 @@ class GenerateVisualizationQuery
 
     /**
      * @param  Collection<int, FilterSetData>  $filterSets
-     *
-     * @throws Exception
      */
     private function applyFilterSets(Builder $query, Collection $filterSets): void
     {
@@ -71,8 +65,6 @@ class GenerateVisualizationQuery
 
     /**
      * @param  Collection<int, FilterData>  $filters
-     *
-     * @throws Exception
      */
     private function applyFilters(Builder $query, Collection $filters, FilterSetOperator $filterSetOperator): void
     {
@@ -82,23 +74,8 @@ class GenerateVisualizationQuery
                 continue;
             }
 
-            $filterClass = $this->getMatchingFilterClass($visualizable, $filter);
-            if (! $filterClass instanceof FilterOperationContract) {
-                throw new Exception("No filter operation found for {$visualizable->getField()} with filter operator {$filter->filterOperator->value}");
-            }
-            $filterClass->handle($query, $visualizable, $filter, $filterSetOperator);
+            $this->filterOperation->handle($query, $visualizable, $filter, $filterSetOperator);
         }
-    }
-
-    private function getMatchingFilterClass(Visualizable $visualizable, FilterData $filter): ?FilterOperationContract
-    {
-        // Resolved once per query rather than once per filter
-        $this->filterOperations ??= collect(config('visualizations.filters'))
-            ->map(fn (string $filterClass): FilterOperationContract => app($filterClass));
-
-        return $this->filterOperations->first(
-            fn (FilterOperationContract $filterOperation): bool => $filterOperation->canHandle($filter->filterOperator)
-        );
     }
 
     /**
