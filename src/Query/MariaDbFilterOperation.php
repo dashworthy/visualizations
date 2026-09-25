@@ -51,11 +51,6 @@ class MariaDbFilterOperation implements FilterOperationContract
         $method = $this->getQueryMethod($visualizable, $filterSetOperator);
         $query->$method($expression, $bindings);
 
-        // A null in an IN list needs its own clause
-        if ($filterData->filterOperator === FilterOperator::IN && in_array(null, $this->getNormalizedValues($filterData->value))) {
-            $query->orWhereNull($visualizable->getFilterWith());
-        }
-
         return $query;
     }
 
@@ -159,7 +154,20 @@ class MariaDbFilterOperation implements FilterOperationContract
      */
     protected function in(string $column, array $columnBindings, mixed $value): array
     {
-        return $this->compileSet($column, $columnBindings, 'IN', $this->getNormalizedValues($value));
+        [$values, $hasNull] = $this->withoutNull($value);
+
+        if (! $hasNull) {
+            return $this->compileSet($column, $columnBindings, 'IN', $values);
+        }
+
+        // IN never matches a null, so the null is matched with IS NULL instead
+        if ($values === []) {
+            return ["$column IS NULL", $columnBindings];
+        }
+
+        [$expression, $bindings] = $this->compileSet($column, $columnBindings, 'IN', $values);
+
+        return ["($expression OR $column IS NULL)", [...$bindings, ...$columnBindings]];
     }
 
     /**

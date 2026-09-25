@@ -21,11 +21,13 @@ beforeEach(function () {
 /**
  * @return array<int, string|null>
  */
-function filteredLabels(Visualizable $visualizable, FilterData $filterData): array
+function filteredLabels(Visualizable $visualizable, FilterData ...$filters): array
 {
     $query = DB::table('filter_rows')->select('label')->orderBy('id');
 
-    (new MariaDbFilterOperation)->handle($query, $visualizable, $filterData);
+    foreach ($filters as $filterData) {
+        (new MariaDbFilterOperation)->handle($query, $visualizable, $filterData);
+    }
 
     return $query->pluck('label')->all();
 }
@@ -53,4 +55,29 @@ test('not in treats 0 as a value, not as null', function () {
 
     expect(filteredLabels(Text::make('label', 'label'), new FilterData('label', [0], FilterOperator::NOT_IN)))
         ->toBe(['apple', 'banana']);
+});
+
+test('in with a null matches the listed values and null', function () {
+    expect(filteredLabels(Text::make('label', 'label'), new FilterData('label', ['apple', null], FilterOperator::IN)))
+        ->toBe(['apple', null]);
+});
+
+test('in with a null stays inside its AND filter set', function () {
+    expect(filteredLabels(
+        Text::make('label', 'label'),
+        new FilterData('label', 'banana', FilterOperator::EQUALS),
+        new FilterData('label', ['apple', null], FilterOperator::IN),
+    ))->toBe([]);
+});
+
+test('in with a null works on a column built from an expression', function () {
+    expect(filteredLabels(Text::make('UPPER(label)', 'label'), new FilterData('label', ['APPLE', null], FilterOperator::IN)))
+        ->toBe(['apple', null]);
+});
+
+test('in treats 0 as a value, not as null', function () {
+    DB::table('filter_rows')->insert(['label' => '0']);
+
+    expect(filteredLabels(Text::make('label', 'label'), new FilterData('label', [0], FilterOperator::IN)))
+        ->toBe(['0']);
 });
