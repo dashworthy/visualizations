@@ -6,8 +6,6 @@ use Dashworthy\Visualizations\Abstracts\FilterOperation;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
-use Dashworthy\Visualizations\Enums\FilterSetOperator;
-use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 
 class NotIn extends FilterOperation
@@ -19,37 +17,49 @@ class NotIn extends FilterOperation
 
     protected function buildExpression(Visualizable $visualizable, FilterData $filterData): string
     {
-        // You MUST have one parameter per item in the array
-        $placeholders = implode(',', array_fill(0, count($this->getNormalizedValues($filterData)), '?'));
+        $column = $visualizable->getFilterWith();
+        [$values, $hasNull] = $this->getValuesWithoutNull($filterData);
 
-        return $visualizable->getFilterWith()." NOT IN ($placeholders)";
+        // You MUST have one parameter per item in the array
+        $placeholders = implode(',', array_fill(0, count($values), '?'));
+
+        if (! $hasNull) {
+            return "$column NOT IN ($placeholders)";
+        }
+
+        // NOT IN never matches when its list holds a null, so the null is excluded with IS NOT NULL instead
+        if ($values === []) {
+            return "$column IS NOT NULL";
+        }
+
+        return "($column NOT IN ($placeholders) AND $column IS NOT NULL)";
     }
 
     protected function buildBindings(Visualizable $visualizable, FilterData $filterData): array
     {
-        return [...$visualizable->getFilterWithBindings(), ...$this->getNormalizedValues($filterData)];
-    }
+        [$values, $hasNull] = $this->getValuesWithoutNull($filterData);
 
-    /**
-     * @throws \Exception
-     */
-    public function handle(Builder $query, Visualizable $visualizable, FilterData $filterData, FilterSetOperator $filterOperator = FilterSetOperator::AND): Builder
-    {
-        parent::handle($query, $visualizable, $filterData, $filterOperator);
-
-        // If one of the values is null, we need to add a whereNotNull clause
-        if (in_array(null, $this->getNormalizedValues($filterData))) {
-            $query->orWhereNotNull($visualizable->getFilterWith());
+        if (! $hasNull) {
+            return [...$visualizable->getFilterWithBindings(), ...$values];
         }
 
-        return $query;
+        if ($values === []) {
+            return $visualizable->getFilterWithBindings();
+        }
+
+        return [...$visualizable->getFilterWithBindings(), ...$values, ...$visualizable->getFilterWithBindings()];
     }
 
     /**
-     * @return array<int, mixed>
+     * The normalized values with any null removed, and whether there was one.
+     *
+     * @return array{0: array<int, mixed>, 1: bool}
      */
-    private function getNormalizedValues(FilterData $filterData): array
+    private function getValuesWithoutNull(FilterData $filterData): array
     {
-        return Collection::wrap($filterData->value)->map(fn ($value): mixed => $this->getNormalizedValue($value))->toArray();
+        $values = Collection::wrap($filterData->value)->map(fn ($value): mixed => $this->getNormalizedValue($value));
+        $withoutNull = $values->reject(fn (mixed $value): bool => $value === null)->values()->all();
+
+        return [$withoutNull, count($withoutNull) !== $values->count()];
     }
 }
