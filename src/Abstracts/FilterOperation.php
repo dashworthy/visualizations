@@ -6,7 +6,6 @@ use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Illuminate\Database\Query\Builder;
-use Illuminate\Pipeline\Pipeline;
 
 abstract class FilterOperation implements FilterOperationContract
 {
@@ -39,18 +38,6 @@ abstract class FilterOperation implements FilterOperationContract
         );
 
         return $query;
-    }
-
-    public function getNormalizedValue(mixed $value): mixed
-    {
-        $normalizers = config('visualizations.normalizers');
-
-        /** @var Pipeline $pipeline */
-        $pipeline = app(Pipeline::class);
-
-        return $pipeline->send($value)
-            ->through($normalizers)
-            ->thenReturn();
     }
 
     public function getQueryMethod(Visualizable $visualizable, FilterSetOperator $filterSetOperator): string

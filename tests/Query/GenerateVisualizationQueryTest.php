@@ -5,11 +5,14 @@ use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
+use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Dashworthy\Visualizations\Enums\SortOperator;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 it('applies filters and sorts to query', function () {
     $query = Mockery::mock(Builder::class);
@@ -40,4 +43,22 @@ it('applies filters and sorts to query', function () {
     $result = $action->handle($query, collect([$visualizable]), $gridData);
 
     expect($result)->toBe($query);
+});
+
+it('matches null for an equals filter whose request value is "null"', function () {
+    $request = new Request([
+        'filter_sets' => [[
+            'filter_set_operator' => FilterSetOperator::AND->value,
+            'filters' => [['field' => 'column_name', 'value' => 'null', 'filter_operator' => FilterOperator::EQUALS->value]],
+        ]],
+    ]);
+
+    $query = GenerateVisualizationQuery::make()->handle(
+        DB::table('users'),
+        collect([Text::make('name', 'name')]),
+        VisualizationData::fromRequest($request)
+    );
+
+    expect($query->toSql())->toContain('where (name IS NULL)')
+        ->and($query->getBindings())->toBe([]);
 });

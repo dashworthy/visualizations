@@ -20,14 +20,14 @@ class In extends FilterOperation
     protected function buildExpression(Visualizable $visualizable, FilterData $filterData): string
     {
         // You MUST have one parameter per item in the array
-        $placeholders = implode(',', array_fill(0, count($this->getNormalizedValues($filterData)), '?'));
+        $placeholders = implode(',', array_fill(0, count($this->getValues($filterData)), '?'));
 
         return $visualizable->getFilterWith()." IN ($placeholders)";
     }
 
     protected function buildBindings(Visualizable $visualizable, FilterData $filterData): array
     {
-        return [...$visualizable->getFilterWithBindings(), ...$this->getNormalizedValues($filterData)];
+        return [...$visualizable->getFilterWithBindings(), ...$this->getValues($filterData)];
     }
 
     /**
@@ -38,7 +38,7 @@ class In extends FilterOperation
         parent::handle($query, $visualizable, $filterData, $filterOperator);
 
         // If one of the values is null, we need to add a whereNull clause
-        if (in_array(null, $this->getNormalizedValues($filterData))) {
+        if (in_array(null, $this->getValues($filterData))) {
             $query->orWhereNull($visualizable->getFilterWith());
         }
 
@@ -48,8 +48,8 @@ class In extends FilterOperation
     /**
      * @return array<int, mixed>
      */
-    private function getNormalizedValues(FilterData $filterData): array
+    private function getValues(FilterData $filterData): array
     {
-        return Collection::wrap($filterData->value)->map(fn ($value): mixed => $this->getNormalizedValue($value))->toArray();
+        return Collection::wrap($filterData->value)->toArray();
     }
 }

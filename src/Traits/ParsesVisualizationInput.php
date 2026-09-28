@@ -8,6 +8,7 @@ use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
 use Dashworthy\Visualizations\Enums\SortOperator;
+use Illuminate\Pipeline\Pipeline;
 use Illuminate\Support\Collection;
 
 trait ParsesVisualizationInput
@@ -18,13 +19,23 @@ trait ParsesVisualizationInput
     {
         $filterSets = collect();
 
+        /** @var Pipeline $pipeline */
+        $pipeline = app(Pipeline::class);
+
+        /** @var array<int, mixed> $normalizers */
+        $normalizers = config('visualizations.normalizers');
+
         foreach ($parsableFilterSets as $parsableFilterSet) {
             $builder = new FilterBuilder;
             foreach ($parsableFilterSet['filters'] as $filter) {
+                $filterOperator = FilterOperator::from($filter['filter_operator']);
+
                 $builder->addFilter(
                     $filter['field'],
-                    $filter['value'],
-                    FilterOperator::from($filter['filter_operator'])
+                    $filterOperator->normalizesValue()
+                        ? $this->normalizeFilterValue($filter['value'], $pipeline, $normalizers)
+                        : $filter['value'],
+                    $filterOperator
                 );
             }
             $filterSets->push(new FilterSetData(
@@ -50,5 +61,19 @@ trait ParsesVisualizationInput
         }
 
         return $sorts;
+    }
+
+    /**
+     * Runs a request value through the normalizers, a list value item by item.
+     *
+     * @param  array<int, mixed>  $normalizers
+     */
+    private function normalizeFilterValue(mixed $value, Pipeline $pipeline, array $normalizers): mixed
+    {
+        if (is_array($value)) {
+            return array_map(fn (mixed $item): mixed => $this->normalizeFilterValue($item, $pipeline, $normalizers), $value);
+        }
+
+        return $pipeline->send($value)->through($normalizers)->thenReturn();
     }
 }
