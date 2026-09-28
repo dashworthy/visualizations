@@ -23,6 +23,7 @@ class DoesNotContain extends FilterOperation
 
     protected function buildBindings(Visualizable $visualizable, FilterData $filterData): array
     {
-        return [...$visualizable->getFilterWithBindings(), '%'.$filterData->value.'%'];
+        // The column is referenced twice, so its bindings are too
+        return [...$visualizable->getFilterWithBindings(), '%'.$filterData->value.'%', ...$visualizable->getFilterWithBindings()];
     }
 }
