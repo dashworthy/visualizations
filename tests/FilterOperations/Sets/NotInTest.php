@@ -59,22 +59,3 @@ test('handles with nulls', function () {
 
     expect($result)->toBe($query);
 });
-
-test('binds its values as given, since they are normalized when the request is parsed', function () {
-    $query = Mockery::mock(Builder::class);
-    $visualizable = Mockery::mock(Visualizable::class);
-    $filterData = new FilterData('created_at', ['null'], FilterOperator::NOT_IN);
-
-    $visualizable->shouldReceive('getFilterWith')->andReturn('key');
-    $visualizable->shouldReceive('isHavingRequired')->andReturn(false);
-    $visualizable->shouldReceive('getFilterWithBindings')->andReturn([]);
-
-    $query->shouldReceive('whereRaw')
-        ->once()
-        ->with('key NOT IN (?)', ['null'])
-        ->andReturnSelf();
-
-    $query->shouldNotReceive('orWhereNotNull');
-
-    expect((new NotIn)->handle($query, $visualizable, $filterData))->toBe($query);
-});

@@ -18,7 +18,7 @@ enum FilterOperator: string
     case GREATER_THAN_OR_EQUAL_TO = 'gte';
 
     /**
-     * Whether a request value for this operator runs through the configured normalizers. A text search term is
+     * Whether FilterData runs a value for this operator through the configured normalizers. A text search term is
      * matched as typed, so searching for "on" or "null" doesn't become a search for true or for anything.
      */
     public function normalizesValue(): bool
