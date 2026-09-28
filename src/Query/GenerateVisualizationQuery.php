@@ -56,6 +56,9 @@ class GenerateVisualizationQuery
     }
 
     /**
+     * Groups each set's row filters into a nested where and its aggregate filters into a nested having. A nested
+     * where keeps only its where clauses, so an aggregate filter placed in one would be dropped.
+     *
      * @param  Collection<int, FilterSetData>  $filterSets
      *
      * @throws Exception
@@ -63,9 +66,27 @@ class GenerateVisualizationQuery
     private function applyFilterSets(Builder $query, Collection $filterSets): void
     {
         foreach ($filterSets as $filterSet) {
-            $query->where(function (Builder $query) use ($filterSet): void {
-                $this->applyFilters($query, $filterSet->filters, $filterSet->filterOperator);
-            });
+            [$aggregateFilters, $rowFilters] = $filterSet->filters->partition(
+                fn (FilterData $filter): bool => $this->getMatchingVisualizable($filter->field)?->isHavingRequired() ?? false
+            );
+
+            // Row filters run before grouping and aggregate filters after, so an OR across the two has no single clause to go in
+            if ($filterSet->filterOperator === FilterSetOperator::OR && $aggregateFilters->isNotEmpty() && $rowFilters->isNotEmpty()) {
+                throw new Exception('A filter set cannot OR an aggregate filter with a row filter');
+            }
+
+            if ($rowFilters->isNotEmpty()) {
+                $query->where(function (Builder $query) use ($rowFilters, $filterSet): void {
+                    $this->applyFilters($query, $rowFilters, $filterSet->filterOperator);
+                });
+            }
+
+            // Only when there is one, since havingNested() fails on a group left empty
+            if ($aggregateFilters->isNotEmpty()) {
+                $query->havingNested(function (Builder $query) use ($aggregateFilters, $filterSet): void {
+                    $this->applyFilters($query, $aggregateFilters, $filterSet->filterOperator);
+                });
+            }
         }
     }
 
