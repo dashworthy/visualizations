@@ -7,7 +7,6 @@ use Dashworthy\Visualizations\Abstracts\Visualization;
 use Dashworthy\Visualizations\Charts\Http\Requests\ChartDataRequest;
 use Dashworthy\Visualizations\Charts\Http\Requests\ChartSchemaRequest;
 use Dashworthy\Visualizations\Charts\Labels\Label;
-use Dashworthy\Visualizations\Charts\Labels\NullLabel;
 use Dashworthy\Visualizations\Contracts\DefinesVisualizationType;
 use Dashworthy\Visualizations\Data\FetchedData;
 use Dashworthy\Visualizations\Enums\VisualizationType;
@@ -81,16 +80,12 @@ abstract class Chart extends Visualization
     }
 
     /**
-     * The label, then the datasets. A NullLabel selects nothing, so it is left out.
+     * The label, then the datasets. A NullLabel is neither selected nor filterable, so it adds nothing to the query.
      */
     protected function getPrimaryVisualizables(): Collection
     {
-        $label = $this->getLabel();
-
         /** @var Collection<int, Visualizable> $visualizables */
-        $visualizables = $label instanceof NullLabel
-            ? $this->getDatasets()
-            : collect([$label])->concat($this->getDatasets());
+        $visualizables = collect([$this->getLabel()])->concat($this->getDatasets());
 
         return $visualizables;
     }

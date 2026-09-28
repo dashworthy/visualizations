@@ -17,6 +17,16 @@ class NullLabel extends Label
         return new static('1', '_null');
     }
 
+    public function isSelected(): bool
+    {
+        return false;
+    }
+
+    public function isFilterable(): bool
+    {
+        return false;
+    }
+
     public function toArray(): array
     {
         return [];

@@ -2,7 +2,6 @@
 
 namespace Dashworthy\Visualizations\Query;
 
-use Dashworthy\Visualizations\Abstracts\FloatingFilter;
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
@@ -40,7 +39,7 @@ class GenerateVisualizationQuery
         $this->applySorts($query, $visualizationData->sorts);
 
         foreach ($visualizables as $visualizable) {
-            if (! $visualizable instanceof FloatingFilter) {
+            if ($visualizable->isSelected()) {
                 $query->selectRaw("{$visualizable->getSelectWith()} as `{$visualizable->getField()}`", $visualizable->getSelectWithBindings());
             }
         }
@@ -78,7 +77,7 @@ class GenerateVisualizationQuery
     {
         foreach ($filters as $filter) {
             $visualizable = $this->getMatchingVisualizable($filter->field);
-            if (empty($visualizable)) {
+            if ($visualizable === null || ! $visualizable->isFilterable()) {
                 continue;
             }
 
@@ -109,7 +108,7 @@ class GenerateVisualizationQuery
         foreach ($sorts as $sort) {
             $visualizable = $this->getMatchingVisualizable($sort->field);
 
-            if (! $visualizable instanceof Visualizable) {
+            if (! $visualizable instanceof Visualizable || ! $visualizable->isSortable()) {
                 continue;
             }
 

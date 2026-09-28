@@ -61,6 +61,8 @@ Column types (in `Dashworthy\Visualizations\DataGrids\Columns`): `Text`, `Number
 
 Per-column modifiers: `->asRowKey()`, `->withoutSorting()`, `->withoutFiltering()`,
 `->hidden()`, `->withoutExport()`, `->pinLeft()`, `->pinRight()`, `->header('...')`.
+The server enforces `withoutSorting()` and `withoutFiltering()`: a sort or filter
+sent for that column is ignored.
 
 Optional overrides: `getFloatingFilters()` for filters on fields not shown as
 columns, and `getDefaultSorts()` for the initial sort order.

@@ -119,14 +119,16 @@ it('getVisualizables appends floating filters after datasets', function () {
     expect($visualizables->get(2))->toBeInstanceOf(FloatingFilter::class);
 });
 
-it('getVisualizables excludes the NullLabel and preserves datasets and floating filters', function () {
+it('getVisualizables keeps the NullLabel, which is neither selected nor filterable', function () {
     $chart = new NullLabelChart;
     $visualizables = $chart->getVisualizables();
 
-    // NullLabelChart has 1 dataset and no floating filters — NullLabel must not appear
-    expect($visualizables)->toHaveCount(1);
-    expect($visualizables->get(0))->toBeInstanceOf(Dataset::class);
-    expect($visualizables->contains(fn ($v) => $v instanceof NullLabel))->toBeFalse();
+    // NullLabelChart has a NullLabel and 1 dataset — the NullLabel itself keeps out of the query
+    expect($visualizables)->toHaveCount(2);
+    expect($visualizables->get(0))->toBeInstanceOf(NullLabel::class);
+    expect($visualizables->get(0)->isSelected())->toBeFalse();
+    expect($visualizables->get(0)->isFilterable())->toBeFalse();
+    expect($visualizables->get(1))->toBeInstanceOf(Dataset::class);
 });
 
 it('fires VisualizationQueryExecuted when handleData is called', function () {

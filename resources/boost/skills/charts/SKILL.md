@@ -110,4 +110,7 @@ it('returns data', function () {
   (e.g. `Order::query()->where('status', 'paid')->toBase()`).
 - Dataset expressions should be aggregates (`SUM`, `COUNT`, `AVG`, ...); the
   label is the grouping field.
+- Filters on an aggregate go in `HAVING`. The package detects `COUNT`, `SUM`,
+  `AVG`, `MIN` and `MAX` by name. Use `->aggregate()` for any other aggregate,
+  and `->aggregate(false)` for a window function such as `SUM(total) OVER ()`.
 - Use `->header('...')` for the display label; otherwise it defaults to the field.

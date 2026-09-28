@@ -20,6 +20,9 @@ it('applies filters and sorts to query', function () {
     $visualizable->shouldReceive('getSelectWithBindings')->andReturn([]);
     $visualizable->shouldReceive('getFilterWithBindings')->andReturn([]);
     $visualizable->shouldReceive('isHavingRequired')->andReturn(false);
+    $visualizable->shouldReceive('isSelected')->andReturn(true);
+    $visualizable->shouldReceive('isFilterable')->andReturn(true);
+    $visualizable->shouldReceive('isSortable')->andReturn(true);
 
     $filterData = new FilterData('test_column', 'test_value', FilterOperator::EQUALS);
     $filterSetData = new FilterSetData(collect([$filterData]), FilterSetOperator::AND);

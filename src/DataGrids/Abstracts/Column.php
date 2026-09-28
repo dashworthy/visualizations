@@ -118,6 +118,16 @@ abstract class Column extends Visualizable
         return $this;
     }
 
+    public function isSortable(): bool
+    {
+        return $this->isSortable && parent::isSortable();
+    }
+
+    public function isFilterable(): bool
+    {
+        return $this->isFilterable;
+    }
+
     /**
      * Check if the column is excluded from export
      */

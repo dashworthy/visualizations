@@ -22,6 +22,11 @@ abstract class Visualizable
 
     protected string $header;
 
+    /**
+     * Set by aggregate() to override detecting an aggregate from the expression.
+     */
+    protected ?bool $isAggregate = null;
+
     /** @param list<mixed> $bindings */
     final public function __construct(string $expression, string $field, array $bindings = [])
     {
@@ -96,15 +101,41 @@ abstract class Visualizable
         return $this->filterWith ?? $this->selectWith;
     }
 
+    /**
+     * Whether the query selects this visualizable into its rows. One that is not selected can still filter.
+     */
+    public function isSelected(): bool
+    {
+        return true;
+    }
+
+    public function isFilterable(): bool
+    {
+        return true;
+    }
+
+    /**
+     * Sorts go by the selected alias, so only a selected visualizable can sort.
+     */
+    public function isSortable(): bool
+    {
+        return $this->isSelected();
+    }
+
+    /**
+     * Marks the expression as an aggregate, or not, instead of detecting it from the function name. Needed for a
+     * window function such as `SUM(total) OVER ()`, or an aggregate the detection does not know.
+     */
+    public function aggregate(bool $isAggregate = true): static
+    {
+        $this->isAggregate = $isAggregate;
+
+        return $this;
+    }
+
     public function isHavingRequired(): bool
     {
-        foreach (['count(', 'sum(', 'avg(', 'min(', 'max('] as $expression) {
-            if (str_contains(strtolower($this->selectWith), $expression)) {
-                return true;
-            }
-        }
-
-        return false;
+        return $this->isAggregate ?? (bool) preg_match('/\b(count|sum|avg|min|max)\s*\(/i', $this->selectWith);
     }
 
     public function header(string $header): static
