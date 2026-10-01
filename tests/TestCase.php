@@ -21,6 +21,15 @@ class TestCase extends Orchestra
                 $table->timestamps();
             });
         }
+
+        // A second table no grid query joins to, so a hydrator has something real to resolve from.
+        if (! Schema::hasTable('notes')) {
+            Schema::create('notes', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('user_id');
+                $table->string('body');
+            });
+        }
     }
 
     protected function getPackageProviders($app)

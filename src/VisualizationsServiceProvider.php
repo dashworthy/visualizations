@@ -7,6 +7,7 @@ use Dashworthy\Visualizations\Charts\Abstracts\Chart;
 use Dashworthy\Visualizations\Charts\Commands\MakeChartCommand;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Commands\MakeDataGridCommand;
+use Dashworthy\Visualizations\DataGrids\Commands\MakeHydratorCommand;
 use Dashworthy\Visualizations\Metrics\Abstracts\Metric;
 use Dashworthy\Visualizations\Metrics\Commands\MakeMetricCommand;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,7 @@ class VisualizationsServiceProvider extends PackageServiceProvider
                 MakeDataGridCommand::class,
                 MakeChartCommand::class,
                 MakeMetricCommand::class,
+                MakeHydratorCommand::class,
             ]);
     }
 
