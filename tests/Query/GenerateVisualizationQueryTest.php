@@ -3,8 +3,8 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Builders\FilterBuilder;
 use Dashworthy\Visualizations\Data\VisualizationData;
-use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\DataGrids\Columns\Number;
+use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\DateHydrator;
 use Illuminate\Database\Query\Builder;
