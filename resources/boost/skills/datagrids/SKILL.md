@@ -22,9 +22,7 @@ Creates `app/DataGrids/UserDataGrid.php` extending
 
 ## 2. Build
 
-Columns are created with `make($sqlExpression, $field)` — the first argument is
-the SQL select expression (usually a column reference), the second is the field
-name.
+Columns are created with `make($expression, $field)`. The first argument is usually the SQL select expression (often a column reference), and the second is the field name. On a DataGrid column, the first argument can instead be a hydrator; see [Hydrated columns](#hydrated-columns) below.
 
 ```php
 use Illuminate\Database\Query\Builder;
@@ -64,6 +62,41 @@ Per-column modifiers: `->asRowKey()`, `->withoutSorting()`, `->withoutFiltering(
 
 Optional overrides: `getFloatingFilters()` for filters on fields not shown as
 columns, and `getDefaultSorts()` for the initial sort order.
+
+### Hydrated columns
+
+For a value on a **to-many** source, which a join would fan out into one row per
+relation, declare the column with a hydrator in place of its SQL. The value is
+filled after the page is fetched, with one `resolve()` call for the whole page. Any
+column type works, and it keeps its own type and modifiers:
+
+```php
+Number::make('users.id', 'ID')->asRowKey(),
+Text::make(UserNotesHydrator::class, 'Notes'),
+Date::make(new LastOrderHydrator($tenant), 'Last Order')->displayFormat('Y-m-d'),
+```
+
+```bash
+php artisan make:hydrator UserNotesHydrator
+```
+
+A hydrator implements `Dashworthy\Visualizations\Contracts\HydratorContract`:
+
+- `keyedBy()` names the field of an ordinary column on the same grid, spelled as
+  declared (`'ID'`, not `'column_ID'`).
+- `resolve(Collection $keys): array` receives every distinct, non-null key on the
+  page and returns `key => value`. A missing key becomes `null`. Scope the lookup
+  yourself; the package holds no tenant or authorization context.
+
+Rules:
+
+- A hydrated column is never sortable or filterable, because its value does not
+  exist when the page is chosen.
+- A class-string hydrator is resolved through the container, on first use only.
+- Only DataGrid columns can be hydrated. Labels, datasets, floating filters and
+  metrics throw.
+- An export must call `$grid->hydrate($rows)` to ship the same values the grid
+  shows.
 
 ## 3. Register the route
 

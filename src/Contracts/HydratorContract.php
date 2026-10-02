@@ -2,11 +2,10 @@
 
 namespace Dashworthy\Visualizations\Contracts;
 
-use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
 use Illuminate\Support\Collection;
 
 /**
- * Fills one hydrated column, resolving a whole page of rows in one pass.
+ * Fills a column declared with a hydrator in place of its expression, resolving a whole page of rows in one pass.
  *
  * A hydrator is handed the page's keys, never its rows, so there is nowhere to put a per-row
  * query. Nothing here scopes what resolve() reads: this package holds no tenant or authorization
@@ -16,9 +15,6 @@ interface HydratorContract
 {
     /** The field keying each row, as the grid author declared it — 'ID', not 'column_ID'. */
     public function keyedBy(): string;
-
-    /** The type of value produced, so the front-end knows how to render it. */
-    public function columnType(): ColumnType|string;
 
     /**
      * Resolve every distinct, non-null key on the page. Called at most once per page, and not at

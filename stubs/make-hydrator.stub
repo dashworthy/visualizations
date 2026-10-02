@@ -4,7 +4,6 @@ namespace {{ namespace }};
 
 use Illuminate\Support\Collection;
 use Dashworthy\Visualizations\Contracts\HydratorContract;
-use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
 
 class HYDRATOR_NAME implements HydratorContract
 {
@@ -15,12 +14,6 @@ class HYDRATOR_NAME implements HydratorContract
     public function keyedBy(): string
     {
         return 'ID';
-    }
-
-    /** How the front-end renders the value. Text is a placeholder; change it to what you return. */
-    public function columnType(): ColumnType|string
-    {
-        return ColumnType::Text;
     }
 
     /**

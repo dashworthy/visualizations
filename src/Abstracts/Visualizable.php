@@ -2,9 +2,12 @@
 
 namespace Dashworthy\Visualizations\Abstracts;
 
+use Dashworthy\Visualizations\Contracts\HydratorContract;
 use Dashworthy\Visualizations\Traits\HandlesMetaData;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
+use LogicException;
 
 abstract class Visualizable
 {
@@ -22,12 +25,31 @@ abstract class Visualizable
 
     protected string $header;
 
-    /** @param list<mixed> $bindings */
-    final public function __construct(string $expression, string $field, array $bindings = [])
+    /**
+     * @param  string|HydratorContract  $expression  SQL to select or, on a DataGrid column only, a hydrator (instance or
+     *                                               class-string) that fills the value after the page is fetched
+     * @param  list<mixed>  $bindings
+     */
+    final public function __construct(string|HydratorContract $expression, string $field, array $bindings = [])
     {
         $this->field = $field;
         $this->header = (string) __($field);
         $this->selectWithBindings = DB::query();
+
+        if ($expression instanceof HydratorContract || self::namesHydrator($expression)) {
+            if ($bindings !== []) {
+                throw new InvalidArgumentException(sprintf(
+                    "%s '%s' was given bindings with a hydrator; there is no SQL for them to bind to.",
+                    class_basename(static::class),
+                    $field,
+                ));
+            }
+
+            $this->selectWith('');
+            $this->useHydrator($expression);
+
+            return;
+        }
 
         $this->selectWith($expression);
 
@@ -36,10 +58,41 @@ abstract class Visualizable
         }
     }
 
-    /** @param list<mixed> $bindings */
-    final public static function make(string $expression, string $field, array $bindings = []): static
+    /**
+     * @param  string|HydratorContract  $expression  see the constructor
+     * @param  list<mixed>  $bindings
+     */
+    final public static function make(string|HydratorContract $expression, string $field, array $bindings = []): static
     {
         return new static($expression, $field, $bindings);
+    }
+
+    /**
+     * Whether a string names a hydrator class rather than holding SQL. SQL that qualifies a column, calls a function,
+     * or spans words never reaches the autoloader.
+     *
+     * @phpstan-assert-if-true class-string<HydratorContract> $expression
+     */
+    private static function namesHydrator(string $expression): bool
+    {
+        if (strpbrk($expression, '. (') !== false) {
+            return false;
+        }
+
+        return is_a($expression, HydratorContract::class, true);
+    }
+
+    /**
+     * Takes the hydrator this was declared with in place of SQL. Only a DataGrid column can be filled after its page
+     * is fetched, so everything else refuses.
+     *
+     * @param  HydratorContract|class-string<HydratorContract>  $hydrator
+     *
+     * @throws LogicException
+     */
+    protected function useHydrator(HydratorContract|string $hydrator): void
+    {
+        throw new LogicException(static::class.' cannot be hydrated; only DataGrid columns can.');
     }
 
     public function addSelectWithBinding(mixed $value): self

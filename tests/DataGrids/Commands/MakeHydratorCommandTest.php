@@ -33,7 +33,8 @@ test('make hydrator command creates file', function () {
     expect($content)->toContain('namespace App\Hydrators;');
     expect($content)->toContain('use Dashworthy\Visualizations\Contracts\HydratorContract;');
     expect($content)->toContain('keyedBy()');
-    expect($content)->toContain('columnType()');
+    expect($content)->not->toContain('columnType()');
+    expect($content)->not->toContain('ColumnType');
     expect($content)->toContain('resolve(Collection $keys)');
 });
 
