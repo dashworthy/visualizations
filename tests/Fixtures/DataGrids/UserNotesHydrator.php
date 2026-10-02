@@ -3,7 +3,6 @@
 namespace Dashworthy\Visualizations\Tests\Fixtures\DataGrids;
 
 use Dashworthy\Visualizations\Contracts\HydratorContract;
-use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -18,11 +17,6 @@ class UserNotesHydrator implements HydratorContract
     public function keyedBy(): string
     {
         return 'ID';
-    }
-
-    public function columnType(): ColumnType|string
-    {
-        return ColumnType::Text;
     }
 
     public function resolve(Collection $keys): array

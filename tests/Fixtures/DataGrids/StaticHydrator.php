@@ -3,7 +3,6 @@
 namespace Dashworthy\Visualizations\Tests\Fixtures\DataGrids;
 
 use Dashworthy\Visualizations\Contracts\HydratorContract;
-use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
 use Illuminate\Support\Collection;
 use RuntimeException;
 
@@ -34,11 +33,6 @@ class StaticHydrator implements HydratorContract
     public function keyedBy(): string
     {
         return $this->keyedBy;
-    }
-
-    public function columnType(): ColumnType|string
-    {
-        return ColumnType::Text;
     }
 
     public function resolve(Collection $keys): array
