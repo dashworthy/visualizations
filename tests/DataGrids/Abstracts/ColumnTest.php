@@ -19,6 +19,17 @@ test('a column declared with SQL carries an expression and no hydrator', functio
         ->and(fn () => $column->getHydrator())->toThrow(LogicException::class, 'was declared with SQL');
 });
 
+test('refuses to hydrate a column declared with SQL, even on a page with no keys', function () {
+    // An empty or all-null page never reaches getHydrator(), so without this guard it would null the column's own
+    // selected field.
+    $column = Text::make('users.name', 'Name');
+
+    expect(fn () => $column->hydrate(columnRows([]), 'column_ID'))
+        ->toThrow(LogicException::class, 'was declared with SQL')
+        ->and(fn () => $column->hydrate(columnRows([null]), 'column_ID'))
+        ->toThrow(LogicException::class, 'was declared with SQL');
+});
+
 test('a column declared with a hydrator carries no expression', function () {
     // What the query generator branches on to leave it out of the statement.
     $column = Text::make(new StaticHydrator, 'Notes');

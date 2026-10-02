@@ -74,9 +74,18 @@ abstract class Column extends Visualizable
      * @param  string  $keyField  the payload field ('column_ID') holding each row's key
      *
      * @throws Exception
+     * @throws LogicException when the column was declared with SQL
      */
     public function hydrate(Collection $rows, string $keyField): void
     {
+        if ($this->hasExpression()) {
+            throw new LogicException(sprintf(
+                "%s column '%s' was declared with SQL; only a column declared with a hydrator can be hydrated.",
+                class_basename(static::class),
+                $this->getField(),
+            ));
+        }
+
         $field = $this->getField();
 
         if ($field === $keyField) {
