@@ -3,7 +3,7 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Builders\FilterBuilder;
 use Dashworthy\Visualizations\Data\VisualizationData;
-use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
+use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\DataGrids\Columns\Number;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\DateHydrator;
@@ -70,7 +70,7 @@ it('selects no expression for a hydrated column', function () {
         $query,
         collect([
             Number::make('users.id', 'ID'),
-            HydratedColumn::for(new DateHydrator, 'Notes'),
+            Text::make(new DateHydrator, 'Notes'),
         ]),
         new VisualizationData,
     );
@@ -88,7 +88,7 @@ it('ignores a sort on a hydrated column', function () {
         $query,
         collect([
             Number::make('users.id', 'ID'),
-            HydratedColumn::for(new DateHydrator, 'Notes'),
+            Text::make(new DateHydrator, 'Notes'),
         ]),
         (new VisualizationData)->addSortAsc('column_Notes'),
     );
@@ -104,7 +104,7 @@ it('ignores a filter on a hydrated column', function () {
         $query,
         collect([
             Number::make('users.id', 'ID'),
-            HydratedColumn::for(new DateHydrator, 'Notes'),
+            Text::make(new DateHydrator, 'Notes'),
         ]),
         (new VisualizationData)->addAndFilterSet(
             fn (FilterBuilder $filters) => $filters->equals('column_Notes', 'anything'),

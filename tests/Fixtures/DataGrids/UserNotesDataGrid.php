@@ -4,7 +4,6 @@ namespace Dashworthy\Visualizations\Tests\Fixtures\DataGrids;
 
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
-use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
 use Dashworthy\Visualizations\DataGrids\Columns\Number;
 use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
@@ -27,7 +26,7 @@ class UserNotesDataGrid extends DataGrid
         return collect([
             Number::make('users.id', 'ID')->asRowKey(),
             Text::make('users.name', 'Name'),
-            HydratedColumn::for(UserNotesHydrator::class, 'Notes'),
+            Text::make(UserNotesHydrator::class, 'Notes'),
         ]);
     }
 

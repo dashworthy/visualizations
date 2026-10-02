@@ -2,7 +2,7 @@
 
 namespace Dashworthy\Visualizations\Tests\Fixtures\DataGrids;
 
-use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
+use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Illuminate\Support\Collection;
 
 /**
@@ -24,7 +24,7 @@ class HydratingUserDataGrid extends UserDataGrid
     public function getColumns(): Collection
     {
         return parent::getColumns()->push(
-            HydratedColumn::for($this->hydrator(), 'Notes'),
+            Text::make($this->hydrator(), 'Notes'),
         );
     }
 }

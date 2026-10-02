@@ -6,7 +6,6 @@ use Dashworthy\Visualizations\Abstracts\Visualization;
 use Dashworthy\Visualizations\Contracts\DefinesVisualizationType;
 use Dashworthy\Visualizations\Data\FetchedData;
 use Dashworthy\Visualizations\Data\SortData;
-use Dashworthy\Visualizations\DataGrids\Columns\HydratedColumn;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridDataRequest;
 use Dashworthy\Visualizations\DataGrids\Http\Requests\DataGridSchemaRequest;
 use Dashworthy\Visualizations\Enums\VisualizationType;
@@ -72,8 +71,8 @@ abstract class DataGrid extends Visualization
     public function hydrate(Collection $rows): Collection
     {
         $this->columns()
-            ->whereInstanceOf(HydratedColumn::class)
-            ->each(fn (HydratedColumn $column) => $column->hydrate($rows, $this->keyFieldFor($column)));
+            ->reject(fn (Column $column): bool => $column->hasExpression())
+            ->each(fn (Column $column) => $column->hydrate($rows, $this->keyFieldFor($column)));
 
         return $rows;
     }
@@ -162,14 +161,14 @@ abstract class DataGrid extends Visualization
     }
 
     /**
-     * The payload field ('column_ID') behind a hydrator's declared key ('ID').
+     * The payload field ('column_ID') behind a hydrated column's declared key ('ID').
      *
      * Only a column the statement selects can key a row; a hydrated column holds no value yet.
      * Floating filters are never selected either, and are not columns, so they cannot match here.
      *
      * @throws Exception
      */
-    private function keyFieldFor(HydratedColumn $column): string
+    private function keyFieldFor(Column $column): string
     {
         $hydrator = $column->getHydrator();
         $declaredField = $hydrator->keyedBy();
