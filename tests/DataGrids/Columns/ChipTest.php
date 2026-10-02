@@ -3,6 +3,8 @@
 use Dashworthy\Visualizations\DataGrids\Columns\Chip;
 use Dashworthy\Visualizations\DataGrids\Enums\ColumnType;
 use Dashworthy\Visualizations\DataGrids\Enums\Severity;
+use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\CountingHydrator;
+use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\StaticHydrator;
 
 test('chip column initializes with correct data type', function () {
     $column = new Chip('table.status', 'Status');
@@ -200,4 +202,43 @@ test('severityUsing returns the chip so it can be chained', function () {
     $chip = Chip::make('table.status', 'Status');
 
     expect($chip->severityUsing(fn (): array => []))->toBe($chip);
+});
+
+test('hydrated chip column keeps its type and selects nothing', function () {
+    $column = Chip::make(new StaticHydrator, 'Status');
+
+    expect($column->toArray())->toMatchArray([
+        'type' => ColumnType::Chip->value,
+        'is_sortable' => false,
+        'is_filterable' => false,
+    ])->and($column->hasExpression())->toBeFalse();
+});
+
+test('hydrated chip column accepts a hydrator class-string', function () {
+    $column = Chip::make(CountingHydrator::class, 'Status');
+
+    expect($column->toArray()['type'])->toBe(ColumnType::Chip->value)
+        ->and($column->getHydrator())->toBeInstanceOf(CountingHydrator::class);
+});
+
+test('hydrated chip column keeps its severities, including resolved ones', function () {
+    // Chip overrides toArray() to resolve severityUsing(); hydration must not bypass it.
+    $static = Chip::make(new StaticHydrator, 'Status')
+        ->severity(['active' => Severity::SUCCESS])
+        ->defaultsToInfoSeverity();
+    $resolved = Chip::make(new StaticHydrator, 'Status')
+        ->severityUsing(fn (): array => ['inactive' => Severity::DANGER]);
+
+    expect($static->toArray()['meta'])->toMatchArray([
+        'severity' => ['active' => Severity::SUCCESS],
+        'default_severity' => Severity::INFO,
+    ])->and($resolved->toArray()['meta']['severity'])->toBe(['inactive' => Severity::DANGER]);
+});
+
+test('hydrated chip column fills a page of rows', function () {
+    $rows = collect([(object) ['column_ID' => 1], (object) ['column_ID' => 2]]);
+
+    Chip::make(new StaticHydrator([1 => 'active', 2 => 'inactive']), 'Status')->hydrate($rows, 'column_ID');
+
+    expect($rows->pluck('column_Status')->all())->toBe(['active', 'inactive']);
 });
