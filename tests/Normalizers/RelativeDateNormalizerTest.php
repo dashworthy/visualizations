@@ -7,7 +7,7 @@ use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Normalizers\RelativeDateNormalizer;
 use Illuminate\Support\Carbon;
 
-test('converts a relative day count to the start of the earliest day in the window', function (string $value, string $expected) {
+test('converts a relative day count to the date of the earliest day in the window', function (string $value, string $expected) {
     $this->travelTo(Carbon::parse('2026-10-05 15:30:00'));
 
     $result = (new RelativeDateNormalizer)->handle($value, fn ($value) => $value);
@@ -15,13 +15,13 @@ test('converts a relative day count to the start of the earliest day in the wind
     expect($result)->toBe($expected);
 })->with([
     // Today counts as the first of the N days.
-    'seven days' => ['-7 days', '2026-09-29 00:00:00'],
-    'one day is today' => ['-1 day', '2026-10-05 00:00:00'],
-    'one days' => ['-1 days', '2026-10-05 00:00:00'],
-    'two day' => ['-2 day', '2026-10-04 00:00:00'],
-    'thirty days' => ['-30 days', '2026-09-06 00:00:00'],
-    'leading zero' => ['-07 days', '2026-09-29 00:00:00'],
-    'upper bound' => ['-365000 days', Carbon::parse('2026-10-05')->subDays(364999)->format('Y-m-d H:i:s')],
+    'seven days' => ['-7 days', '2026-09-29'],
+    'one day is today' => ['-1 day', '2026-10-05'],
+    'one days' => ['-1 days', '2026-10-05'],
+    'two day' => ['-2 day', '2026-10-04'],
+    'thirty days' => ['-30 days', '2026-09-06'],
+    'leading zero' => ['-07 days', '2026-09-29'],
+    'upper bound' => ['-365000 days', '1027-06-06'],
 ]);
 
 test('crosses a month boundary', function () {
@@ -29,7 +29,7 @@ test('crosses a month boundary', function () {
 
     $result = (new RelativeDateNormalizer)->handle('-3 days', fn ($value) => $value);
 
-    expect($result)->toBe('2026-02-28 00:00:00');
+    expect($result)->toBe('2026-02-28');
 });
 
 test('crosses a year boundary', function () {
@@ -37,7 +37,7 @@ test('crosses a year boundary', function () {
 
     $result = (new RelativeDateNormalizer)->handle('-2 days', fn ($value) => $value);
 
-    expect($result)->toBe('2025-12-31 00:00:00');
+    expect($result)->toBe('2025-12-31');
 });
 
 test('counts days in the app timezone', function () {
@@ -47,7 +47,17 @@ test('counts days in the app timezone', function () {
 
     $result = (new RelativeDateNormalizer)->handle('-1 day', fn ($value) => $value);
 
-    expect($result)->toBe('2026-10-04 00:00:00');
+    expect($result)->toBe('2026-10-04');
+});
+
+test('returns the date even where DST starts at midnight', function () {
+    // Santiago skips from 00:00 to 01:00 on 2026-09-06, so the start of that day is 01:00.
+    config()->set('app.timezone', 'America/Santiago');
+    $this->travelTo(Carbon::parse('2026-10-05 15:30:00', 'America/Santiago'));
+
+    $result = (new RelativeDateNormalizer)->handle('-30 days', fn ($value) => $value);
+
+    expect($result)->toBe('2026-09-06');
 });
 
 test('leaves anything else untouched', function (mixed $value) {
@@ -88,7 +98,7 @@ test('passes the converted value to the next normalizer', function () {
 
     $result = (new RelativeDateNormalizer)->handle('-7 days', fn ($value) => "next:{$value}");
 
-    expect($result)->toBe('next:2026-09-29 00:00:00');
+    expect($result)->toBe('next:2026-09-29');
 });
 
 test('runs as a default normalizer', function () {
@@ -108,5 +118,5 @@ test('runs as a default normalizer', function () {
     };
 
     expect(config('visualizations.normalizers'))->toContain(RelativeDateNormalizer::class)
-        ->and($operation->getNormalizedValue('-7 days'))->toBe('2026-09-29 00:00:00');
+        ->and($operation->getNormalizedValue('-7 days'))->toBe('2026-09-29');
 });

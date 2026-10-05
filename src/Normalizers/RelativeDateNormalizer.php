@@ -7,10 +7,12 @@ use Dashworthy\Visualizations\Contracts\NormalizerContract;
 use Illuminate\Support\Carbon;
 
 /**
- * Turns a relative day count such as "-7 days" into the start of the earliest day in that window, counting
- * today as the first day: on 2026-10-05, "-7 days" becomes "2026-09-29 00:00:00" and "-1 day" becomes
- * "2026-10-05 00:00:00". Days are counted in the app timezone. Anything else passes through untouched,
- * including a count of zero and one above MAXIMUM_DAYS, which would otherwise overflow into a nonsense date.
+ * Turns a relative day count such as "-7 days" into the date of the earliest day in that window, counting
+ * today as the first day: on 2026-10-05, "-7 days" becomes "2026-09-29" and "-1 day" becomes "2026-10-05".
+ * Days are counted in the app timezone. The result is a date with no time, so it compares correctly with a
+ * date column stored as text and never lands on 01:00 where DST starts at midnight; a datetime column still
+ * compares it as the start of that day. Anything else passes through untouched, including a count of zero and
+ * one above MAXIMUM_DAYS, which would otherwise overflow into a nonsense date.
  */
 class RelativeDateNormalizer implements NormalizerContract
 {
@@ -28,7 +30,7 @@ class RelativeDateNormalizer implements NormalizerContract
             if ($days >= 1 && $days <= self::MAXIMUM_DAYS) {
                 $value = Carbon::today(config('app.timezone'))
                     ->subDays($days - 1)
-                    ->format('Y-m-d H:i:s');
+                    ->toDateString();
             }
         }
 

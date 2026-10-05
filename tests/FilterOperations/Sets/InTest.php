@@ -70,11 +70,11 @@ test('binds a relative date as the date it stands for, as the default normalizer
     $visualizable = Mockery::mock(Visualizable::class);
     $filterData = new FilterData('created_at', ['-7 days', 'value'], FilterOperator::IN);
 
-    $visualizable->shouldReceive('getFilterWith')->andReturn('key');
+    $visualizable->shouldReceive('getFilterWith')->andReturn('created_at');
     $visualizable->shouldReceive('isHavingRequired')->andReturn(false);
     $visualizable->shouldReceive('getFilterWithBindings')->andReturn([]);
 
     (new In)->handle($query, $visualizable, $filterData);
 
-    expect($query->getBindings())->toBe(['2026-09-29 00:00:00', 'value']);
+    expect($query->getBindings())->toBe(['2026-09-29', 'value']);
 });
