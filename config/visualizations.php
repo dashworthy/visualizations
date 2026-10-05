@@ -14,11 +14,13 @@ use Dashworthy\Visualizations\FilterOperations\Text\EndsWith;
 use Dashworthy\Visualizations\FilterOperations\Text\StartsWith;
 use Dashworthy\Visualizations\Normalizers\BooleanNormalizer;
 use Dashworthy\Visualizations\Normalizers\NullNormalizer;
+use Dashworthy\Visualizations\Normalizers\RelativeDateNormalizer;
 
 return [
     'normalizers' => [
         BooleanNormalizer::class,
         NullNormalizer::class,
+        RelativeDateNormalizer::class,
     ],
 
     'filters' => [

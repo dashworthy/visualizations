@@ -3,11 +3,13 @@
 use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Builders\FilterBuilder;
 use Dashworthy\Visualizations\Data\VisualizationData;
+use Dashworthy\Visualizations\DataGrids\Columns\DateTime;
 use Dashworthy\Visualizations\DataGrids\Columns\Number;
 use Dashworthy\Visualizations\DataGrids\Columns\Text;
 use Dashworthy\Visualizations\Query\GenerateVisualizationQuery;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\DateHydrator;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
 it('applies filters and sorts to query', function () {
@@ -112,4 +114,45 @@ it('ignores a filter on a hydrated column', function () {
     );
 
     expect($query->toRawSql())->not->toContain('where');
+});
+
+it('keeps only the last seven calendar days for a greater than or equal to "-7 days" filter', function () {
+    $this->travelTo(Carbon::parse('2026-10-05 15:30:00'));
+
+    DB::table('users')->insert([
+        ['name' => 'eight days ago, last second', 'email' => 'a@example.com', 'created_at' => '2026-09-28 23:59:59'],
+        ['name' => 'seven days ago, first second', 'email' => 'b@example.com', 'created_at' => '2026-09-29 00:00:00'],
+        ['name' => 'mid window', 'email' => 'c@example.com', 'created_at' => '2026-10-01 12:00:00'],
+        ['name' => 'today', 'email' => 'd@example.com', 'created_at' => '2026-10-05 09:00:00'],
+    ]);
+
+    $query = DB::table('users');
+
+    GenerateVisualizationQuery::make()->handle(
+        $query,
+        collect([Text::make('users.name', 'Name'), DateTime::make('users.created_at', 'Created')]),
+        (new VisualizationData)
+            ->addAndFilterSet(fn (FilterBuilder $filters) => $filters->greaterThanOrEqualTo('column_Created', '-7 days'))
+            ->addSortAsc('column_Created'),
+    );
+
+    expect($query->pluck('column_Name')->all())->toBe(['seven days ago, first second', 'mid window', 'today']);
+});
+
+it('matches no rows when a comparison value normalizes to null', function () {
+    // 'null' binds NULL, so the comparison is unknown for every row, as it already was for a null value.
+    DB::table('users')->insert([
+        ['name' => 'someone', 'email' => 'a@example.com', 'created_at' => '2026-09-28 23:59:59'],
+    ]);
+
+    $query = DB::table('users');
+
+    GenerateVisualizationQuery::make()->handle(
+        $query,
+        collect([Text::make('users.name', 'Name'), DateTime::make('users.created_at', 'Created')]),
+        (new VisualizationData)
+            ->addAndFilterSet(fn (FilterBuilder $filters) => $filters->lessThan('column_Created', 'null')),
+    );
+
+    expect($query->pluck('column_Name')->all())->toBe([]);
 });
