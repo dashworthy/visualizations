@@ -5,6 +5,7 @@ namespace Dashworthy\Visualizations;
 use Dashworthy\Visualizations\Abstracts\Visualization;
 use Dashworthy\Visualizations\Charts\Abstracts\Chart;
 use Dashworthy\Visualizations\Charts\Commands\MakeChartCommand;
+use Dashworthy\Visualizations\Contracts\HandlesDataGridViews;
 use Dashworthy\Visualizations\DataGrids\Abstracts\DataGrid;
 use Dashworthy\Visualizations\DataGrids\Commands\MakeDataGridCommand;
 use Dashworthy\Visualizations\DataGrids\Commands\MakeHydratorCommand;
@@ -60,9 +61,36 @@ class VisualizationsServiceProvider extends PackageServiceProvider
             $registerCoreRoutes($metricFQCN, Metric::class, 'Metric');
         });
 
-        Route::macro('dataGrid', function (string $dataGridFQCN) use ($registerCoreRoutes): void {
-            $dataGrid = $registerCoreRoutes($dataGridFQCN, DataGrid::class, 'DataGrid');
+        /**
+         * Registers every saved-views route for a grid implementing HandlesDataGridViews.
+         */
+        $registerViewRoutes = function (Visualization $dataGrid, string $dataGridFQCN): void {
+            Route::get($dataGrid->getRoutePath().'/views', [$dataGridFQCN, 'handleViews'])
+                ->name($dataGrid->getRouteName().'.views');
 
+            Route::post($dataGrid->getRoutePath().'/views', [$dataGridFQCN, 'handleViewStore'])
+                ->name($dataGrid->getRouteName().'.views.store');
+
+            Route::patch($dataGrid->getRoutePath().'/views/{view}', [$dataGridFQCN, 'handleViewUpdate'])
+                ->name($dataGrid->getRouteName().'.views.update');
+
+            Route::put($dataGrid->getRoutePath().'/views/{view}/default', [$dataGridFQCN, 'handleViewDefault'])
+                ->name($dataGrid->getRouteName().'.views.default');
+
+            Route::delete($dataGrid->getRoutePath().'/views/{view}/default', [$dataGridFQCN, 'handleViewClearDefault'])
+                ->name($dataGrid->getRouteName().'.views.clear-default');
+
+            Route::delete($dataGrid->getRoutePath().'/views/{view}', [$dataGridFQCN, 'handleViewDestroy'])
+                ->name($dataGrid->getRouteName().'.views.destroy');
+        };
+
+        /**
+         * Registers the index, store and destroy views routes for a grid that defines those handlers without
+         * implementing HandlesDataGridViews. Update, default and clear-default are only registered through the contract.
+         *
+         * @deprecated Implement HandlesDataGridViews instead; method detection of view handlers will be removed.
+         */
+        $registerDeprecatedViewRoutes = function (Visualization $dataGrid, string $dataGridFQCN): void {
             if (method_exists($dataGridFQCN, 'handleViews')) {
                 Route::get($dataGrid->getRoutePath().'/views', [$dataGridFQCN, 'handleViews'])
                     ->name($dataGrid->getRouteName().'.views');
@@ -73,24 +101,19 @@ class VisualizationsServiceProvider extends PackageServiceProvider
                     ->name($dataGrid->getRouteName().'.views.store');
             }
 
-            if (method_exists($dataGridFQCN, 'handleViewUpdate')) {
-                Route::patch($dataGrid->getRoutePath().'/views/{view}', [$dataGridFQCN, 'handleViewUpdate'])
-                    ->name($dataGrid->getRouteName().'.views.update');
-            }
-
-            if (method_exists($dataGridFQCN, 'handleViewDefault')) {
-                Route::put($dataGrid->getRoutePath().'/views/{view}/default', [$dataGridFQCN, 'handleViewDefault'])
-                    ->name($dataGrid->getRouteName().'.views.default');
-            }
-
-            if (method_exists($dataGridFQCN, 'handleViewClearDefault')) {
-                Route::delete($dataGrid->getRoutePath().'/views/{view}/default', [$dataGridFQCN, 'handleViewClearDefault'])
-                    ->name($dataGrid->getRouteName().'.views.clear-default');
-            }
-
             if (method_exists($dataGridFQCN, 'handleViewDestroy')) {
                 Route::delete($dataGrid->getRoutePath().'/views/{view}', [$dataGridFQCN, 'handleViewDestroy'])
                     ->name($dataGrid->getRouteName().'.views.destroy');
+            }
+        };
+
+        Route::macro('dataGrid', function (string $dataGridFQCN) use ($registerCoreRoutes, $registerViewRoutes, $registerDeprecatedViewRoutes): void {
+            $dataGrid = $registerCoreRoutes($dataGridFQCN, DataGrid::class, 'DataGrid');
+
+            if ($dataGrid instanceof HandlesDataGridViews) {
+                $registerViewRoutes($dataGrid, $dataGridFQCN);
+            } else {
+                $registerDeprecatedViewRoutes($dataGrid, $dataGridFQCN);
             }
 
             if (method_exists($dataGridFQCN, 'handleExport')) {
