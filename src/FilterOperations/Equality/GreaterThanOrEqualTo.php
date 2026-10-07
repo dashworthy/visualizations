@@ -18,4 +18,12 @@ class GreaterThanOrEqualTo extends FilterOperation
     {
         return $visualizable->getFilterWith().' >= ?';
     }
+
+    /**
+     * Binds the normalized value, so a relative date such as "-7 days" compares as the date it stands for.
+     */
+    protected function buildBindings(Visualizable $visualizable, FilterData $filterData): array
+    {
+        return [...$visualizable->getFilterWithBindings(), $this->getNormalizedValue($filterData->value)];
+    }
 }
