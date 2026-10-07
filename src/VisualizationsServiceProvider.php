@@ -73,6 +73,21 @@ class VisualizationsServiceProvider extends PackageServiceProvider
                     ->name($dataGrid->getRouteName().'.views.store');
             }
 
+            if (method_exists($dataGridFQCN, 'handleViewUpdate')) {
+                Route::patch($dataGrid->getRoutePath().'/views/{view}', [$dataGridFQCN, 'handleViewUpdate'])
+                    ->name($dataGrid->getRouteName().'.views.update');
+            }
+
+            if (method_exists($dataGridFQCN, 'handleViewDefault')) {
+                Route::put($dataGrid->getRoutePath().'/views/{view}/default', [$dataGridFQCN, 'handleViewDefault'])
+                    ->name($dataGrid->getRouteName().'.views.default');
+            }
+
+            if (method_exists($dataGridFQCN, 'handleViewClearDefault')) {
+                Route::delete($dataGrid->getRoutePath().'/views/{view}/default', [$dataGridFQCN, 'handleViewClearDefault'])
+                    ->name($dataGrid->getRouteName().'.views.clear-default');
+            }
+
             if (method_exists($dataGridFQCN, 'handleViewDestroy')) {
                 Route::delete($dataGrid->getRoutePath().'/views/{view}', [$dataGridFQCN, 'handleViewDestroy'])
                     ->name($dataGrid->getRouteName().'.views.destroy');

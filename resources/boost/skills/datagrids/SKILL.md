@@ -112,6 +112,20 @@ This always registers POST `grids/users/data` and `grids/users/schema` (named
 methods exist. The path is derived from the class name minus the `DataGrid`
 suffix. Override `getRoutePrefix()` to change the `grids` prefix.
 
+Optional handler methods and the routes they add (for `UserDataGrid`):
+
+| Method | Verb | URI | Name |
+| --- | --- | --- | --- |
+| `handleViews` | GET | `grids/users/views` | `grids.users.views` |
+| `handleViewStore` | POST | `grids/users/views` | `grids.users.views.store` |
+| `handleViewUpdate` | PATCH | `grids/users/views/{view}` | `grids.users.views.update` |
+| `handleViewDefault` | PUT | `grids/users/views/{view}/default` | `grids.users.views.default` |
+| `handleViewClearDefault` | DELETE | `grids/users/views/{view}/default` | `grids.users.views.clear-default` |
+| `handleViewDestroy` | DELETE | `grids/users/views/{view}` | `grids.users.views.destroy` |
+| `handleExport` | POST | `grids/users/export` | `grids.users.export` |
+| `handleExportStatus` | GET | `grids/users/exports/{export}` | `grids.users.export.status` |
+| `handleExportDownload` | GET | `grids/users/exports/{export}/download` | `grids.users.export.download` |
+
 ## 4. Test with Pest
 
 ```bash
