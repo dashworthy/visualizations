@@ -1,8 +1,10 @@
 <?php
 
+use Dashworthy\Visualizations\Contracts\HandlesDataGridViews;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\LegacyViewUserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\SavedViewUserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 test('route macro registers all routes', function () {
@@ -160,4 +162,30 @@ test('route macro never registers the update, default and clear default views ro
     'update' => ['grids.legacy-view-users.views.update'],
     'default' => ['grids.legacy-view-users.views.default'],
     'clear default' => ['grids.legacy-view-users.views.clear-default'],
+]);
+
+test('HandlesDataGridViews handlers take only the request, so a prefixed group parameter cannot shift into the view id', function () {
+    $methods = (new ReflectionClass(HandlesDataGridViews::class))->getMethods();
+
+    expect($methods)->toHaveCount(6);
+
+    foreach ($methods as $method) {
+        $parameters = $method->getParameters();
+
+        expect($parameters)->toHaveCount(1, $method->getName().' must take only the request')
+            ->and((string) $parameters[0]->getType())->toBe(Request::class);
+    }
+});
+
+test('a grid implementing HandlesDataGridViews under a prefixed group reads the view and group parameters by name', function (string $method, string $uri, string $handler) {
+    Route::prefix('t/{tenant}')->group(fn () => Route::dataGrid(SavedViewUserDataGrid::class));
+
+    $this->json($method, $uri)
+        ->assertOk()
+        ->assertExactJson(['handler' => $handler, 'tenant' => 'acme', 'view' => '42']);
+})->with([
+    'update' => ['PATCH', 't/acme/grids/saved-view-users/views/42', 'handleViewUpdate'],
+    'default' => ['PUT', 't/acme/grids/saved-view-users/views/42/default', 'handleViewDefault'],
+    'clear default' => ['DELETE', 't/acme/grids/saved-view-users/views/42/default', 'handleViewClearDefault'],
+    'destroy' => ['DELETE', 't/acme/grids/saved-view-users/views/42', 'handleViewDestroy'],
 ]);

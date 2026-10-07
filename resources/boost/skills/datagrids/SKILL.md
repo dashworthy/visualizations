@@ -114,17 +114,20 @@ is derived from the class name minus the `DataGrid` suffix. Override
 
 **Saved views.** A grid implementing
 `Dashworthy\Visualizations\Contracts\HandlesDataGridViews` gets all six views
-routes. `{view}` is the raw route segment (a `string`, never model-bound): the
-implementor resolves it and scopes it to the viewer and grid itself.
+routes. Every handler takes only `Request $request`; read the view id by name
+with `$request->route('view')`. Laravel passes route parameters to an action by
+position, so under a group with its own parameter (`Route::prefix('t/{tenant}')`)
+a `$view` argument would receive the tenant. The id is the raw segment, never
+model-bound: the implementor resolves it and scopes it to the viewer and grid.
 
 | Method | Verb | URI | Name |
 | --- | --- | --- | --- |
 | `handleViews(Request): JsonResponse` | GET | `grids/users/views` | `grids.users.views` |
 | `handleViewStore(Request): JsonResponse` | POST | `grids/users/views` | `grids.users.views.store` |
-| `handleViewUpdate(Request, string $view): JsonResponse` | PATCH | `grids/users/views/{view}` | `grids.users.views.update` |
-| `handleViewDefault(Request, string $view): Response` | PUT | `grids/users/views/{view}/default` | `grids.users.views.default` |
-| `handleViewClearDefault(Request, string $view): Response` | DELETE | `grids/users/views/{view}/default` | `grids.users.views.clear-default` |
-| `handleViewDestroy(Request, string $view): Response` | DELETE | `grids/users/views/{view}` | `grids.users.views.destroy` |
+| `handleViewUpdate(Request): JsonResponse` | PATCH | `grids/users/views/{view}` | `grids.users.views.update` |
+| `handleViewDefault(Request): Response` | PUT | `grids/users/views/{view}/default` | `grids.users.views.default` |
+| `handleViewClearDefault(Request): Response` | DELETE | `grids/users/views/{view}/default` | `grids.users.views.clear-default` |
+| `handleViewDestroy(Request): Response` | DELETE | `grids/users/views/{view}` | `grids.users.views.destroy` |
 
 `Response` is Symfony's, so those three may answer 204 No Content. Deprecated:
 a grid that does not implement the contract still gets `.views`,
