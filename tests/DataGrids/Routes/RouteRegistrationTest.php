@@ -1,5 +1,6 @@
 <?php
 
+use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\SavedViewUserDataGrid;
 use Dashworthy\Visualizations\Tests\Fixtures\DataGrids\UserDataGrid;
 use Illuminate\Support\Facades\Route;
 
@@ -80,3 +81,51 @@ test('route macro does not register views destroy route when handleViewDestroy a
 
     expect($routes->getByName('grids.users.views.destroy'))->toBeNull();
 });
+
+test('route macro does not register views update route when handleViewUpdate absent', function () {
+    Route::dataGrid(UserDataGrid::class);
+
+    $routes = Route::getRoutes();
+    $routes->refreshNameLookups();
+
+    expect($routes->getByName('grids.users.views.update'))->toBeNull();
+});
+
+test('route macro does not register views default route when handleViewDefault absent', function () {
+    Route::dataGrid(UserDataGrid::class);
+
+    $routes = Route::getRoutes();
+    $routes->refreshNameLookups();
+
+    expect($routes->getByName('grids.users.views.default'))->toBeNull();
+});
+
+test('route macro does not register views clear default route when handleViewClearDefault absent', function () {
+    Route::dataGrid(UserDataGrid::class);
+
+    $routes = Route::getRoutes();
+    $routes->refreshNameLookups();
+
+    expect($routes->getByName('grids.users.views.clear-default'))->toBeNull();
+});
+
+test('route macro registers a views route when its handler exists', function (string $name, string $method, string $uri, string $handler) {
+    Route::dataGrid(SavedViewUserDataGrid::class);
+
+    $routes = Route::getRoutes();
+    $routes->refreshNameLookups();
+
+    $route = $routes->getByName($name);
+
+    expect($route)->not->toBeNull()
+        ->and($route->methods())->toContain($method)
+        ->and($route->uri())->toBe($uri)
+        ->and($route->getActionName())->toBe(SavedViewUserDataGrid::class.'@'.$handler);
+})->with([
+    'index' => ['grids.saved-view-users.views', 'GET', 'grids/saved-view-users/views', 'handleViews'],
+    'store' => ['grids.saved-view-users.views.store', 'POST', 'grids/saved-view-users/views', 'handleViewStore'],
+    'update' => ['grids.saved-view-users.views.update', 'PATCH', 'grids/saved-view-users/views/{view}', 'handleViewUpdate'],
+    'default' => ['grids.saved-view-users.views.default', 'PUT', 'grids/saved-view-users/views/{view}/default', 'handleViewDefault'],
+    'clear default' => ['grids.saved-view-users.views.clear-default', 'DELETE', 'grids/saved-view-users/views/{view}/default', 'handleViewClearDefault'],
+    'destroy' => ['grids.saved-view-users.views.destroy', 'DELETE', 'grids/saved-view-users/views/{view}', 'handleViewDestroy'],
+]);
