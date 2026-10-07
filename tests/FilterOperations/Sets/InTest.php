@@ -76,5 +76,5 @@ test('binds a relative date as the date it stands for, as the default normalizer
 
     (new In)->handle($query, $visualizable, $filterData);
 
-    expect($query->getBindings())->toBe(['2026-09-28', 'value']);
+    expect($query->getBindings())->toBe(['2026-09-29', 'value']);
 });

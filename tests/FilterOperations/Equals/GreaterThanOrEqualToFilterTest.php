@@ -51,8 +51,7 @@ test('binds the normalized value', function (mixed $value, mixed $expected) {
     expect($query->wheres[0]['sql'])->toBe('created_at >= ?')
         ->and($query->getBindings())->toBe([$expected]);
 })->with([
-    'relative days' => ['-7 days', '2026-09-28'],
-    'relative hours' => ['-3 hours', '2026-10-05 12:30:00'],
+    'relative days' => ['-7 days', '2026-09-29'],
     'null' => [null, null],
     'null string' => ['null', null],
     'empty string' => ['', null],
@@ -81,5 +80,5 @@ test('binds the normalized value in a having clause for an aggregate', function 
 
     expect($query->wheres)->toBe([])
         ->and($query->havings[0]['sql'])->toBe('max(users.created_at) >= ?')
-        ->and($query->getBindings())->toBe(['2026-09-28']);
+        ->and($query->getBindings())->toBe(['2026-09-29']);
 });

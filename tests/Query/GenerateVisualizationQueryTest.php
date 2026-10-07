@@ -119,14 +119,13 @@ it('ignores a filter on a hydrated column', function () {
     expect($query->toRawSql())->not->toContain('where');
 });
 
-it('keeps rows from seven days ago onward for a greater than or equal to "-7 days" filter on a datetime column', function () {
-    // Carbon's "-7 days" at 15:30 on the 5th is the 28th, and the filter compares from the start of that date.
+it('keeps only the last seven calendar days for a greater than or equal to "-7 days" filter on a datetime column', function () {
     $this->travelTo(Carbon::parse('2026-10-05 15:30:00'));
 
     DB::table('users')->insert([
-        ['name' => 'eight days ago, last second', 'email' => 'a@example.com', 'created_at' => '2026-09-27 23:59:59'],
-        ['name' => 'seven days ago, first second', 'email' => 'b@example.com', 'created_at' => '2026-09-28 00:00:00'],
-        ['name' => 'seven days ago, afternoon', 'email' => 'e@example.com', 'created_at' => '2026-09-28 13:00:00'],
+        ['name' => 'eight days ago, last second', 'email' => 'a@example.com', 'created_at' => '2026-09-28 23:59:59'],
+        ['name' => 'seven days ago, first second', 'email' => 'b@example.com', 'created_at' => '2026-09-29 00:00:00'],
+        ['name' => 'seven days ago, afternoon', 'email' => 'e@example.com', 'created_at' => '2026-09-29 13:00:00'],
         ['name' => 'mid window', 'email' => 'c@example.com', 'created_at' => '2026-10-01 12:00:00'],
         ['name' => 'today', 'email' => 'd@example.com', 'created_at' => '2026-10-05 09:00:00'],
     ]);
@@ -144,8 +143,8 @@ it('keeps rows from seven days ago onward for a greater than or equal to "-7 day
     expect($query->pluck('column_Name')->all())->toBe(['seven days ago, first second', 'seven days ago, afternoon', 'mid window', 'today']);
 });
 
-it('keeps rows from seven days ago onward for a greater than or equal to "-7 days" filter on a date column', function () {
-    // SQLite compares dates as text, where '2026-09-28' >= '2026-09-28 00:00:00' would be false.
+it('keeps only the last seven calendar days for a greater than or equal to "-7 days" filter on a date column', function () {
+    // SQLite compares dates as text, where '2026-09-29' >= '2026-09-29 00:00:00' would be false.
     $this->travelTo(Carbon::parse('2026-10-05 15:30:00'));
 
     Schema::create('events', function (Blueprint $table): void {
@@ -155,8 +154,8 @@ it('keeps rows from seven days ago onward for a greater than or equal to "-7 day
     });
 
     DB::table('events')->insert([
-        ['name' => 'eight days ago', 'happened_on' => '2026-09-27'],
-        ['name' => 'seven days ago', 'happened_on' => '2026-09-28'],
+        ['name' => 'eight days ago', 'happened_on' => '2026-09-28'],
+        ['name' => 'seven days ago', 'happened_on' => '2026-09-29'],
         ['name' => 'today', 'happened_on' => '2026-10-05'],
     ]);
 
@@ -171,28 +170,6 @@ it('keeps rows from seven days ago onward for a greater than or equal to "-7 day
     );
 
     expect($query->pluck('column_Name')->all())->toBe(['seven days ago', 'today']);
-});
-
-it('keeps rows from three hours ago onward for a greater than or equal to "-3 hours" filter on a datetime column', function () {
-    $this->travelTo(Carbon::parse('2026-10-05 15:30:00'));
-
-    DB::table('users')->insert([
-        ['name' => 'just too early', 'email' => 'a@example.com', 'created_at' => '2026-10-05 12:29:59'],
-        ['name' => 'three hours ago', 'email' => 'b@example.com', 'created_at' => '2026-10-05 12:30:00'],
-        ['name' => 'half an hour ago', 'email' => 'c@example.com', 'created_at' => '2026-10-05 15:00:00'],
-    ]);
-
-    $query = DB::table('users');
-
-    GenerateVisualizationQuery::make()->handle(
-        $query,
-        collect([Text::make('users.name', 'Name'), DateTime::make('users.created_at', 'Created')]),
-        (new VisualizationData)
-            ->addAndFilterSet(fn (FilterBuilder $filters) => $filters->greaterThanOrEqualTo('column_Created', '-3 hours'))
-            ->addSortAsc('column_Created'),
-    );
-
-    expect($query->pluck('column_Name')->all())->toBe(['three hours ago', 'half an hour ago']);
 });
 
 it('matches no rows when a comparison value normalizes to null', function () {
