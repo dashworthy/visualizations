@@ -3,8 +3,10 @@
 namespace Dashworthy\Visualizations\Data;
 
 use Dashworthy\Visualizations\Enums\SortOperator;
+use Illuminate\Contracts\Support\Arrayable;
 
-class SortData
+/** @implements Arrayable<string, int|string> */
+class SortData implements Arrayable
 {
     public function __construct(public string $field, public SortOperator $sortOperator) {}
 

@@ -3,8 +3,10 @@
 namespace Dashworthy\Visualizations\Data;
 
 use Dashworthy\Visualizations\Enums\FilterOperator;
+use Illuminate\Contracts\Support\Arrayable;
 
-class FilterData
+/** @implements Arrayable<string, mixed> */
+class FilterData implements Arrayable
 {
     public function __construct(
         public string $field,

@@ -3,9 +3,11 @@
 namespace Dashworthy\Visualizations\Data;
 
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 
-class FilterSetData
+/** @implements Arrayable<string, mixed> */
+class FilterSetData implements Arrayable
 {
     /** @param Collection<int, FilterData> $filters */
     public function __construct(
