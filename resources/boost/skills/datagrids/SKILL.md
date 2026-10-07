@@ -108,20 +108,37 @@ Route::dataGrid(UserDataGrid::class);
 ```
 
 This always registers POST `grids/users/data` and `grids/users/schema` (named
-`grids.users.data` and `.schema`), plus view/export routes when those handler
-methods exist. The path is derived from the class name minus the `DataGrid`
-suffix. Override `getRoutePrefix()` to change the `grids` prefix.
+`grids.users.data` and `.schema`), plus view/export routes as below. The path
+is derived from the class name minus the `DataGrid` suffix. Override
+`getRoutePrefix()` to change the `grids` prefix.
 
-Optional handler methods and the routes they add (for `UserDataGrid`):
+**Saved views.** A grid implementing
+`Dashworthy\Visualizations\Contracts\HandlesDataGridViews` gets all six views
+routes. Every handler takes only `Request $request`; read the view id by name
+with `$request->route('view')`. Laravel passes route parameters to an action by
+position, so under a group with its own parameter (`Route::prefix('t/{tenant}')`)
+a `$view` argument would receive the tenant. The id is the raw segment, never
+model-bound: the implementor resolves it and scopes it to the viewer and grid.
 
 | Method | Verb | URI | Name |
 | --- | --- | --- | --- |
-| `handleViews` | GET | `grids/users/views` | `grids.users.views` |
-| `handleViewStore` | POST | `grids/users/views` | `grids.users.views.store` |
-| `handleViewUpdate` | PATCH | `grids/users/views/{view}` | `grids.users.views.update` |
-| `handleViewDefault` | PUT | `grids/users/views/{view}/default` | `grids.users.views.default` |
-| `handleViewClearDefault` | DELETE | `grids/users/views/{view}/default` | `grids.users.views.clear-default` |
-| `handleViewDestroy` | DELETE | `grids/users/views/{view}` | `grids.users.views.destroy` |
+| `handleViews(Request): JsonResponse` | GET | `grids/users/views` | `grids.users.views` |
+| `handleViewStore(Request): JsonResponse` | POST | `grids/users/views` | `grids.users.views.store` |
+| `handleViewUpdate(Request): JsonResponse` | PATCH | `grids/users/views/{view}` | `grids.users.views.update` |
+| `handleViewDefault(Request): Response` | PUT | `grids/users/views/{view}/default` | `grids.users.views.default` |
+| `handleViewClearDefault(Request): Response` | DELETE | `grids/users/views/{view}/default` | `grids.users.views.clear-default` |
+| `handleViewDestroy(Request): Response` | DELETE | `grids/users/views/{view}` | `grids.users.views.destroy` |
+
+`Response` is Symfony's, so those three may answer 204 No Content. Deprecated:
+a grid that does not implement the contract still gets `.views`,
+`.views.store` and `.views.destroy` when it defines `handleViews`,
+`handleViewStore` or `handleViewDestroy`; it never gets update, default or
+clear-default.
+
+**Exports.** Registered when the grid defines the handler method:
+
+| Method | Verb | URI | Name |
+| --- | --- | --- | --- |
 | `handleExport` | POST | `grids/users/export` | `grids.users.export` |
 | `handleExportStatus` | GET | `grids/users/exports/{export}` | `grids.users.export.status` |
 | `handleExportDownload` | GET | `grids/users/exports/{export}/download` | `grids.users.export.download` |
