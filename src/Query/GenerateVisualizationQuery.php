@@ -10,7 +10,6 @@ use Dashworthy\Visualizations\Data\FilterSetData;
 use Dashworthy\Visualizations\Data\SortData;
 use Dashworthy\Visualizations\Data\VisualizationData;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
-use Dashworthy\Visualizations\FilterOperations\FilterOperationResolver;
 use Exception;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
@@ -20,12 +19,8 @@ class GenerateVisualizationQuery
     /** @var Collection<int, Visualizable> */
     private Collection $visualizables;
 
-    private FilterOperationResolver $filterOperationResolver;
-
-    public function __construct()
-    {
-        $this->filterOperationResolver = FilterOperationResolver::make();
-    }
+    /** @var Collection<int, FilterOperationContract>|null */
+    private ?Collection $filterOperations = null;
 
     public static function make(): self
     {
@@ -98,12 +93,23 @@ class GenerateVisualizationQuery
                 continue;
             }
 
-            $filterClass = $this->filterOperationResolver->resolve($filter->filterOperator);
+            $filterClass = $this->getMatchingFilterClass($visualizable, $filter);
             if (! $filterClass instanceof FilterOperationContract) {
                 throw new Exception("No filter operation found for {$visualizable->getField()} with filter operator {$filter->filterOperator->value}");
             }
             $filterClass->handle($query, $visualizable, $filter, $filterSetOperator);
         }
+    }
+
+    private function getMatchingFilterClass(Visualizable $visualizable, FilterData $filter): ?FilterOperationContract
+    {
+        // Resolved once per query rather than once per filter
+        $this->filterOperations ??= collect(config('visualizations.filters'))
+            ->map(fn (string $filterClass): FilterOperationContract => app($filterClass));
+
+        return $this->filterOperations->first(
+            fn (FilterOperationContract $filterOperation): bool => $filterOperation->canHandle($filter->filterOperator)
+        );
     }
 
     /**

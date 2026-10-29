@@ -130,3 +130,18 @@ it('names the filter value when it is not a single value', function () {
     expect($validator->errors()->first('filter_sets.0.filters.0.value'))
         ->toBe('The filter sets.0.filters.0.value must be a single value.');
 });
+
+it('checks values only once the filter set is well formed', function () {
+    $validator = Validator::make(
+        ['filter_sets' => [[
+            'filter_set_operator' => 'and',
+            'filters' => [
+                ['value' => 'Ada', 'filter_operator' => 'equals'],
+                ['field' => 'column_ID', 'value' => ['a', 'b'], 'filter_operator' => 'equals'],
+            ],
+        ]]],
+        ['filter_sets.*' => [new FilterSetRule]],
+    );
+
+    expect($validator->errors()->keys())->toBe(['filter_sets.0.filters.0.field']);
+});
