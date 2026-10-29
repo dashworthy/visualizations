@@ -7,6 +7,7 @@ use Dashworthy\Visualizations\Abstracts\Visualizable;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterOperator;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
+use Dashworthy\Visualizations\Rules\ScalarRule;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 
@@ -15,6 +16,19 @@ class NotIn extends FilterOperation
     public function canHandle(FilterOperator $filterOperator): bool
     {
         return $filterOperator === FilterOperator::NOT_IN;
+    }
+
+    /**
+     * A list of single values, each bound to its own placeholder.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public function rules(): array
+    {
+        return [
+            'value' => ['present', 'list'],
+            'value.*' => ['nullable', new ScalarRule],
+        ];
     }
 
     protected function buildExpression(Visualizable $visualizable, FilterData $filterData): string
