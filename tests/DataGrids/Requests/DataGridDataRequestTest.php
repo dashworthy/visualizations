@@ -76,3 +76,24 @@ test('last must be non negative', function () {
     expect($validator->fails())->toBeTrue();
     expect($validator->errors()->toArray())->toHaveKey('last');
 });
+
+test('a filter value must fit its operator', function () {
+    // A list bound where one value belongs shifts every later binding into the wrong placeholder.
+    $request = DataGridDataRequest::create('/grid-data', 'POST', [
+        'filter_sets' => [[
+            'filter_set_operator' => 'or',
+            'filters' => [
+                ['field' => 'column_ID', 'filter_operator' => 'equals', 'value' => []],
+                ['field' => 'column_Role', 'filter_operator' => 'equals', 'value' => ['admin', 'web', 'owner']],
+            ],
+        ]],
+    ]);
+    $request->setContainer(app());
+
+    $validator = validator($request->all(), $request->rules());
+
+    expect($validator->errors()->keys())->toBe([
+        'filter_sets.0.filters.0.value',
+        'filter_sets.0.filters.1.value',
+    ]);
+});

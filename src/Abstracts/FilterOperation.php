@@ -5,6 +5,7 @@ namespace Dashworthy\Visualizations\Abstracts;
 use Dashworthy\Visualizations\Contracts\FilterOperationContract;
 use Dashworthy\Visualizations\Data\FilterData;
 use Dashworthy\Visualizations\Enums\FilterSetOperator;
+use Dashworthy\Visualizations\Rules\ScalarRule;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Pipeline\Pipeline;
 
@@ -14,6 +15,18 @@ abstract class FilterOperation implements FilterOperationContract
      * The SQL condition for this operation, with a `?` for each binding.
      */
     abstract protected function buildExpression(Visualizable $visualizable, FilterData $filterData): string;
+
+    /**
+     * A single value or null, the one value the default bindings bind. An operation that binds a list overrides this.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    public function rules(): array
+    {
+        return [
+            'value' => ['present', 'nullable', new ScalarRule],
+        ];
+    }
 
     /**
      * The bindings for buildExpression(), in placeholder order: the visualizable's filter bindings for each time
