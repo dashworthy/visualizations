@@ -21,8 +21,13 @@ class DoesNotContain extends FilterOperation
         return '('.$col.' NOT LIKE ? OR '.$col.' IS NULL)';
     }
 
+    /**
+     * The expression references the visualizable twice, so its bindings are bound for each reference.
+     */
     protected function buildBindings(Visualizable $visualizable, FilterData $filterData): array
     {
-        return [...$visualizable->getFilterWithBindings(), '%'.$filterData->value.'%'];
+        $filterWithBindings = $visualizable->getFilterWithBindings();
+
+        return [...$filterWithBindings, '%'.$filterData->value.'%', ...$filterWithBindings];
     }
 }
